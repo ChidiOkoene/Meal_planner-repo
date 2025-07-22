@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-# Modern Meal Planner
 
 AI-driven meal planning for 6 cuisines (Nigeria, Cameroon, Ghana, Kenya, South Africa, USA) with nutrition tracking, recipe guides, and shopping lists.
 
@@ -24,6 +22,7 @@ docker-compose up
 =======
 **Folder Structure**
 
+```
 ```
 .
 ├── frontend/           # React + TypeScript application
