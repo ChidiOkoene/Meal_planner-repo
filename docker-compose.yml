@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      - db
+
+  llm-service:
+    build: ./llm-service
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 8g
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: meal_user
+      POSTGRES_PASSWORD: meal_pass
+      POSTGRES_DB: meal_planner
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
