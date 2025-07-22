@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@types/node': ^24.0.14
+
 importers:
 
   .:
@@ -528,7 +531,7 @@ packages:
     peerDependencies:
       '@swc/core': '>=1.2.50'
       '@swc/wasm': '>=1.2.50'
-      '@types/node': '*'
+      '@types/node': ^24.0.14
       typescript: '>=2.7'
     peerDependenciesMeta:
       '@swc/core':
