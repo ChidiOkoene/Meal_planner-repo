@@ -1,0 +1,84 @@
+**Folder Structure**
+
+```
+.
+├── frontend/           # React + TypeScript application
+├── backend/            # REST/GraphQL API service
+├── llm-service/        # AI microservice wrapping the LLM
+├── infra/              # Terraform/Helm/Kubernetes manifests
+├── docs/               # Project documentation and prompts
+├── scripts/            # Automation scripts (bootstrap, deploy)
+├── tests/              # Integration & end-to-end tests
+├── .gitignore          # Git ignore patterns
+└── README.md           # Top‑level project overview
+```
+
+---
+
+# Dyjext Meal Planner
+
+## Project Vision
+
+Dyjext is an open‑source, AI‑driven meal‑planning web application supporting diverse cuisines (Nigeria, Cameroon, Ghana, Kenya, South Africa, USA). Users receive personalized weekly meal plans, nutritional breakdowns, step‑by‑step recipe guides, calendar scheduling, exportable shopping lists, and seamless sharing.
+
+## Tech Stack
+
+* **Frontend:** React, TypeScript, Tailwind CSS, FullCalendar, Recharts
+* **Backend:** Node.js (Express/GraphQL) or Python (FastAPI), Prisma or TypeORM/SQLAlchemy
+* **Database:** PostgreSQL
+* **AI Service:** FastAPI (or Express) + 🤗 Transformers (GPT‑NeoX/LLaMA)
+* **Caching:** Redis
+* **Storage:** S3‑compatible (e.g., DigitalOcean Spaces)
+* **Infra & CD/CI:** Docker, Kubernetes, Terraform/Helm, GitHub Actions
+* **Monitoring:** Prometheus, Grafana; Error tracking: Sentry
+
+## Folder Layout
+
+* `frontend/` – Bootstrapped React app with theming, global state, components
+* `backend/` – API routes, ORM models, migrations, unit/integration tests
+* `llm-service/` – Dockerized microservice for meal‑plan and recipe generation
+* `infra/` – IaC for k8s cluster, DB, cache, storage; Helm charts or Terraform modules
+* `docs/` – `chronology.md`, `prompts.md`, additional guides and wireframes
+* `scripts/` – `bootstrap.sh`, `deploy.sh`, Makefile for common targets
+* `tests/` – End‑to‑end, API integration, nutrient calculator tests
+
+## Prerequisites
+
+* Git ≥2.30
+* Docker & Docker Compose
+* Node.js ≥16 & npm (or Yarn)
+* Python ≥3.9 & Poetry (if using FastAPI)
+* Terraform or Helm CLI
+
+## Setup Instructions
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/your-org/deepseek-meal-planner.git
+   cd deepseek-meal-planner
+   ```
+2. **Bootstrap all services**
+
+   ```bash
+   scripts/bootstrap.sh
+   ```
+3. **Start development environment**
+
+   ```bash
+   make up
+   ```
+4. **Run tests**
+
+   ```bash
+   make test
+   ```
+5. **Deploy to Kubernetes**
+
+   ```bash
+   scripts/deploy.sh
+   ```
+
+---
+
+*Next Up: Initialize package managers and Dockerfiles for each service (Task 1.3)*
