@@ -19,7 +19,7 @@
 
 ## Project Vision
 
-Dyjext is an open‑source, AI‑driven meal‑planning web application supporting diverse cuisines (Nigeria, Cameroon, Ghana, Kenya, South Africa, USA). Users receive personalized weekly meal plans, nutritional breakdowns, step‑by‑step recipe guides, calendar scheduling, exportable shopping lists, and seamless sharing.
+Dyjext is an open‑source, AI‑driven meal‑planning web application supporting diverse cuisines (Nigeria, Cameroon, Ghana, Kenya, South Africa, USA). Users receive personalised weekly meal plans, nutritional breakdowns, step-by-step recipe guides, calendar scheduling, exportable shopping lists, and seamless sharing capabilities.
 
 ## Tech Stack
 
@@ -55,8 +55,8 @@ Dyjext is an open‑source, AI‑driven meal‑planning web application supporti
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/your-org/deepseek-meal-planner.git
-   cd deepseek-meal-planner
+   git clone https://github.com/your-org/dyjext-meal-planner.git
+   cd dyjext-meal-planner
    ```
 2. **Bootstrap all services**
 
@@ -81,4 +81,3 @@ Dyjext is an open‑source, AI‑driven meal‑planning web application supporti
 
 ---
 
-*Next Up: Initialize package managers and Dockerfiles for each service (Task 1.3)*
