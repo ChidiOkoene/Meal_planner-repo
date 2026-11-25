@@ -1,0 +1,6 @@
+{
+  "name": "@dyjext/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Background job worker and weekly-cycle scheduler (BullMQ)."
+}

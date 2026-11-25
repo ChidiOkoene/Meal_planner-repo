@@ -1,0 +1,6 @@
+{
+  "name": "@dyjext/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js app: public site, payer app (/app), staff console (/ops) and vendor order pages (/v)."
+}

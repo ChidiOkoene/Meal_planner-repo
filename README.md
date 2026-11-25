@@ -1,107 +1,75 @@
+# Dyjext Care
 
-AI-driven meal planning for 6 cuisines (Nigeria, Cameroon, Ghana, Kenya, South Africa, USA) with nutrition tracking, recipe guides, and shopping lists.
+Healthy, familiar home meals for parents living with diabetes or high blood pressure in Africa, paid for by family abroad.
 
-## Tech Stack
-- **Frontend**: React 18 + TypeScript + Tailwind CSS + Redux Toolkit
-- **Backend**: Node.js/Express + PostgreSQL + TypeORM
-- **LLM Service**: Python/FastAPI + HuggingFace Transformers (LLaMA)
-- **Infra**: Docker, Kubernetes, PostgreSQL, Redis, DigitalOcean Spaces
-- **CI/CD**: GitHub Actions, Terraform, Helm
+A family member abroad (the **payer**) subscribes for a parent at home (the **recipient**). Each week:
 
-## Setup
+1. A meal plan is built from a verified catalogue of local dishes, within limits set by a dietitian.
+2. A dietitian approves the plan, and it is sent to the parent on WhatsApp.
+3. A local vendor buys and delivers the ingredients.
+4. The payer gets a delivery photo and, each month, a progress report.
+
+The first launch covers Lagos, Nigerian food, type 2 diabetes and hypertension, with payers in the UK.
+
+The full design is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Work is tracked as GitHub issues, one per planned PR.
+
+## Repository layout
+
+```
+apps/
+  web/        Next.js: public site, payer app, staff console, vendor order pages
+  api/        NestJS HTTP API and webhooks
+  worker/     Background jobs and the weekly-cycle scheduler
+packages/
+  config/     Shared TypeScript and ESLint presets
+  db/         Prisma schema, migrations, seed and catalogue importers
+  shared/     Shared zod schemas, types and money helpers
+  planner/    Meal-planning engine (pure functions, no I/O)
+  nutrition/  Nutrient maths and local unit conversion
+  messaging/  WhatsApp templates and message builders
+docs/         Architecture and decision records
+```
+
+Most apps and packages are placeholders at this stage; each README names the issue that builds it.
+
+## Getting started
+
+Requirements: Node.js 22 (see `.nvmrc`), pnpm 10 (`corepack enable`), Docker.
+
+Install dependencies:
+
 ```bash
-# Clone repo
-git clone https://github.com/your-username/meal-planner.git
-cd meal-planner
-
-# Install dependencies
-./scripts/bootstrap.sh
-
-# Start services
-docker-compose up
-=======
-**Folder Structure**
-
-```
-```
-.
-├── frontend/           # React + TypeScript application
-├── backend/            # REST/GraphQL API service
-├── llm-service/        # AI microservice wrapping the LLM
-├── infra/              # Terraform/Helm/Kubernetes manifests
-├── docs/               # Project documentation and prompts
-├── scripts/            # Automation scripts (bootstrap, deploy)
-├── tests/              # Integration & end-to-end tests
-├── .gitignore          # Git ignore patterns
-└── README.md           # Top‑level project overview
+pnpm install
 ```
 
----
+Start PostgreSQL and Redis:
 
-# Dyjext Meal Planner
+```bash
+docker compose up -d
+```
 
-## Project Vision
+Create your local environment file:
 
-Dyjext is an open‑source, AI‑driven meal‑planning web application supporting diverse cuisines (Nigeria, Cameroon, Ghana, Kenya, South Africa, USA). Users receive personalised weekly meal plans, nutritional breakdowns, step-by-step recipe guides, calendar scheduling, exportable shopping lists, and seamless sharing capabilities.
+```bash
+cp .env.example .env
+```
 
-## Tech Stack
+## Common commands
 
-* **Frontend:** React, TypeScript, Tailwind CSS, FullCalendar, Recharts
-* **Backend:** Node.js (Express/GraphQL) or Python (FastAPI), Prisma or TypeORM/SQLAlchemy
-* **Database:** PostgreSQL
-* **AI Service:** FastAPI (or Express) + 🤗 Transformers (GPT‑NeoX/LLaMA)
-* **Caching:** Redis
-* **Storage:** S3‑compatible (e.g., DigitalOcean Spaces)
-* **Infra & CD/CI:** Docker, Kubernetes, Terraform/Helm, GitHub Actions
-* **Monitoring:** Prometheus, Grafana; Error tracking: Sentry
+| Command             | What it does                            |
+| ------------------- | --------------------------------------- |
+| `pnpm build`        | Build every package                     |
+| `pnpm lint`         | Lint every package                      |
+| `pnpm typecheck`    | Type-check every package                |
+| `pnpm test`         | Run tests                               |
+| `pnpm format`       | Format the repository with Prettier     |
+| `pnpm format:check` | Check formatting without changing files |
 
-## Folder Layout
+## Contributing
 
-* `frontend/` – Bootstrapped React app with theming, global state, components
-* `backend/` – API routes, ORM models, migrations, unit/integration tests
-* `llm-service/` – Dockerized microservice for meal‑plan and recipe generation
-* `infra/` – IaC for k8s cluster, DB, cache, storage; Helm charts or Terraform modules
-* `docs/` – `chronology.md`, `prompts.md`, additional guides and wireframes
-* `scripts/` – `bootstrap.sh`, `deploy.sh`, Makefile for common targets
-* `tests/` – End‑to‑end, API integration, nutrient calculator tests
+Branch names follow `type(scope)/short-title`, and commit messages and PR titles follow `type(scope): title`.
 
-## Prerequisites
+- **type:** `feat`, `fix` or `chore`
+- **scope:** `Data`, `UI`, `SW` or `ML`
 
-* Git ≥2.30
-* Docker & Docker Compose
-* Node.js ≥16 & npm (or Yarn)
-* Python ≥3.9 & Poetry (if using FastAPI)
-* Terraform or Helm CLI
-
-## Setup Instructions
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/your-org/dyjext-meal-planner.git
-   cd dyjext-meal-planner
-   ```
-2. **Bootstrap all services**
-
-   ```bash
-   scripts/bootstrap.sh
-   ```
-3. **Start development environment**
-
-   ```bash
-   make up
-   ```
-4. **Run tests**
-
-   ```bash
-   make test
-   ```
-5. **Deploy to Kubernetes**
-
-   ```bash
-   scripts/deploy.sh
-   ```
-
----
-
->>>>>>> 0a016369a6f7d294cae76c0a7fdb236d10370851
+Example: branch `feat(SW)/planner-engine-v1`, PR title `feat(SW): planner engine v1`.
