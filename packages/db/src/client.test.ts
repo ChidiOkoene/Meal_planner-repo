@@ -1,10 +1,16 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPrismaClient } from './client.js';
+import { type PrismaClient } from './generated/prisma/client.js';
 
 // Integration tests: run only when a migrated and seeded database is available
 // (CI provides one; locally run `pnpm db:migrate && pnpm db:seed` first).
 describe.skipIf(!process.env.DATABASE_URL)('database', () => {
-  const prisma = createPrismaClient();
+  // Created in beforeAll, not at collection time: vitest still runs this describe body when
+  // the suite is skipped, and creating a client without DATABASE_URL throws.
+  let prisma: PrismaClient;
+  beforeAll(() => {
+    prisma = createPrismaClient();
+  });
   afterAll(() => prisma.$disconnect());
 
   it('reads seeded staff with their roles', async () => {
