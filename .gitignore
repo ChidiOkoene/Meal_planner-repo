@@ -8,6 +8,9 @@ out/
 build/
 *.tsbuildinfo
 
+# Generated Prisma client (rebuilt by `pnpm db:generate` / the build)
+**/src/generated/
+
 # Turborepo
 .turbo/
 
