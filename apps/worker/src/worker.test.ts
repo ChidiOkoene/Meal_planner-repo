@@ -84,6 +84,7 @@ describe.skipIf(!hasServices)('worker', () => {
       redisUrl,
       logger,
       prefix,
+      outboxAggregateTypes: [prefix],
       schedules: [],
       outboxPollMs: 100,
       eventHandlers: {
@@ -141,6 +142,7 @@ describe.skipIf(!hasServices)('worker', () => {
       redisUrl,
       logger,
       prefix: crashPrefix,
+      outboxAggregateTypes: [prefix],
       schedules: [],
       workerOptions: timings,
       systemHandlers: {
@@ -168,6 +170,7 @@ describe.skipIf(!hasServices)('worker', () => {
       redisUrl,
       logger,
       prefix,
+      outboxAggregateTypes: [prefix],
       schedules: [],
       systemHandlers: {
         'test.broken': () => Promise.reject(new Error('always fails')),
@@ -191,7 +194,14 @@ describe.skipIf(!hasServices)('worker', () => {
   }, 20_000);
 
   it('runs the heartbeat job', async () => {
-    const worker = await startWorker({ prisma, redisUrl, logger, prefix, schedules: [] });
+    const worker = await startWorker({
+      prisma,
+      redisUrl,
+      logger,
+      prefix,
+      outboxAggregateTypes: [prefix],
+      schedules: [],
+    });
     try {
       await redis.del('worker:heartbeat');
       await worker.queues.system.add('system.heartbeat', {});

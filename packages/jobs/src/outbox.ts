@@ -1,4 +1,4 @@
-import { type Prisma, type PrismaClient } from '@dyjext/db';
+import { Prisma, type PrismaClient } from '@dyjext/db';
 import { type Queue } from 'bullmq';
 
 /** A domain event, as delivered to job handlers. */
@@ -47,15 +47,25 @@ interface OutboxRow {
 export async function relayOutboxBatch(
   prisma: PrismaClient,
   eventsQueue: Queue,
-  options: { batchSize?: number } = {},
+  options: {
+    batchSize?: number;
+    /**
+     * Only relay events of these aggregate types. Unset relays everything (normal operation);
+     * useful for splitting relays and for tests that share a database.
+     */
+    aggregateTypes?: string[];
+  } = {},
 ): Promise<number> {
   const batchSize = options.batchSize ?? 100;
+  const filter = options.aggregateTypes
+    ? Prisma.sql`AND aggregate_type = ANY(${options.aggregateTypes})`
+    : Prisma.empty;
   return prisma.$transaction(
     async (tx) => {
       const rows = await tx.$queryRaw<OutboxRow[]>`
         SELECT id, aggregate_type, aggregate_id, event_type, payload, occurred_at
         FROM outbox_events
-        WHERE processed_at IS NULL
+        WHERE processed_at IS NULL ${filter}
         ORDER BY occurred_at, id
         LIMIT ${batchSize}
         FOR UPDATE SKIP LOCKED`;
