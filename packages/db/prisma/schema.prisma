@@ -317,3 +317,286 @@ enum AuditActorType {
 
   @@map("audit_actor_type")
 }
+
+// ─── Catalogue ───────────────────────────────────────────────────────────────
+// The food database: the product's core asset (docs/ARCHITECTURE.md §7.3).
+// Nutrient values and grams are stored as double precision: they are measurements with
+// natural uncertainty, not money, and the planner does floating-point maths on them.
+
+/// A raw food bought at the market, e.g. "Yam", "Egusi (ground melon seed)".
+model Ingredient {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  name              String             @unique
+  /// Local names in English, Yoruba, Igbo, Hausa and Pidgin, e.g. ["ewedu", "jute leaves"].
+  aliases           String[]
+  category          IngredientCategory
+  /// Bought monthly rather than weekly (oil, salt, seasoning).
+  isPantryStaple    Boolean            @default(false) @map("is_pantry_staple")
+  /// Days it keeps after purchase, for planning when to cook what.
+  perishabilityDays Int?               @map("perishability_days")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  nutrientProfile NutrientProfile?
+  localUnits      LocalUnit[]
+  dishIngredients DishIngredient[]
+
+  @@index([category])
+  @@map("ingredients")
+}
+
+enum IngredientCategory {
+  staple
+  legume
+  protein
+  vegetable
+  fruit
+  oil
+  seasoning
+  dairy
+  nut_seed
+  beverage
+
+  @@map("ingredient_category")
+}
+
+/// Nutrients per 100 g of the edible portion, as purchased (raw unless the name says otherwise).
+model NutrientProfile {
+  id              String             @id @default(uuid(7)) @db.Uuid
+  ingredientId    String             @unique @map("ingredient_id") @db.Uuid
+  energyKcal      Float              @map("energy_kcal")
+  proteinG        Float              @map("protein_g")
+  carbsG          Float              @map("carbs_g")
+  fatG            Float              @map("fat_g")
+  fibreG          Float              @map("fibre_g")
+  /// Total sugars, when known.
+  sugarsG         Float?             @map("sugars_g")
+  sodiumMg        Float              @map("sodium_mg")
+  /// Relevant for blood pressure; optional until sourced data covers every ingredient.
+  potassiumMg     Float?             @map("potassium_mg")
+  /// Glycaemic index (glucose = 100), when a published value exists.
+  glycaemicIndex  Int?               @map("glycaemic_index")
+  source          NutrientSource
+  /// Table and row, URL or lab report id.
+  sourceReference String?            @map("source_reference")
+  confidence      NutrientConfidence
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@map("nutrient_profiles")
+}
+
+enum NutrientSource {
+  /// FAO/INFOODS West African Food Composition Table (2019).
+  wafct_2019
+  /// Kenya Food Composition Tables.
+  kenya_fct
+  usda_fooddata
+  lab_analysis
+  product_label
+  /// Approximation for development only; must be replaced before dishes are verified.
+  estimate
+
+  @@map("nutrient_source")
+}
+
+enum NutrientConfidence {
+  high
+  medium
+  low
+
+  @@map("nutrient_confidence")
+}
+
+/// A local measure and its weight in grams, e.g. a derica of rice ≈ 260 g.
+/// Weights vary by market and seller, so a typical range is kept alongside the median.
+model LocalUnit {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  /// Null for generic units that apply to any ingredient.
+  ingredientId String?       @map("ingredient_id") @db.Uuid
+  /// Singular name, e.g. "derica", "mudu", "bunch", "tuber".
+  name         String
+  kind         LocalUnitKind
+  grams        Float
+  gramsP10     Float?        @map("grams_p10")
+  gramsP90     Float?        @map("grams_p90")
+  notes        String?
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ingredient Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, name])
+  @@map("local_units")
+}
+
+enum LocalUnitKind {
+  /// How it is sold at the market (shopping lists).
+  purchase
+  /// How it is measured in the kitchen.
+  household
+
+  @@map("local_unit_kind")
+}
+
+/// One version of a dish. Versions of the same dish share a `familyId`.
+/// A verified version is never edited: changing it creates the next version as a draft,
+/// and the planner keeps using the latest verified version until the new one is verified.
+/// Meal plans record the exact version they used.
+model Dish {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  familyId           String           @map("family_id") @db.Uuid
+  version            Int              @default(1)
+  name               String
+  /// Other names the dish is known by, e.g. ["ewa agoyin"].
+  aliases            String[]
+  cuisine            Cuisine
+  description        String?
+  mealTypes          MealType[]       @map("meal_types")
+  dishType           DishType         @map("dish_type")
+  /// Dish types this is eaten with, e.g. a soup pairs with a swallow.
+  pairsWith          DishType[]       @map("pairs_with")
+  /// What one serving is called, e.g. "plate", "wrap", "ladle", "piece".
+  servingUnit        String           @map("serving_unit")
+  prepMinutes        Int              @default(0) @map("prep_minutes")
+  cookMinutes        Int              @default(0) @map("cook_minutes")
+  /// Cooked once and eaten over several days (most soups and stews).
+  batchCookable      Boolean          @default(false) @map("batch_cookable")
+  /// Days it keeps after cooking, refrigerated.
+  keepsDays          Int?             @map("keeps_days")
+  texture            DishTexture      @default(regular)
+  verificationStatus DishVerification @default(draft) @map("verification_status")
+  verifiedById       String?          @map("verified_by_id") @db.Uuid
+  verifiedAt         DateTime?        @map("verified_at") @db.Timestamptz(6)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ingredients DishIngredient[]
+  recipes     Recipe[]
+  tags        DishTag[]
+
+  @@unique([familyId, version])
+  @@index([verificationStatus])
+  @@index([dishType])
+  @@map("dishes")
+}
+
+enum Cuisine {
+  nigerian
+  cameroonian
+  ghanaian
+  kenyan
+  south_african
+  american
+
+  @@map("cuisine")
+}
+
+enum MealType {
+  breakfast
+  lunch
+  dinner
+  snack
+
+  @@map("meal_type")
+}
+
+enum DishType {
+  /// A complete meal on its own.
+  main
+  /// Eaten with a swallow.
+  soup
+  /// Eba, amala, pounded yam and similar.
+  swallow
+  side
+  snack
+  drink
+
+  @@map("dish_type")
+}
+
+enum DishTexture {
+  regular
+  /// Suitable for people with chewing difficulty.
+  soft
+
+  @@map("dish_texture")
+}
+
+enum DishVerification {
+  draft
+  dietitian_verified
+  /// No longer offered; kept because past plans reference it.
+  retired
+
+  @@map("dish_verification")
+}
+
+/// An ingredient in one serving of a dish, in grams as purchased (raw).
+model DishIngredient {
+  id              String  @id @default(uuid(7)) @db.Uuid
+  dishId          String  @map("dish_id") @db.Uuid
+  ingredientId    String  @map("ingredient_id") @db.Uuid
+  gramsPerServing Float   @map("grams_per_serving")
+  isOptional      Boolean @default(false) @map("is_optional")
+  /// e.g. "chopped", "ground".
+  preparation     String?
+  sortOrder       Int     @default(0) @map("sort_order")
+
+  dish       Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([dishId, ingredientId])
+  @@map("dish_ingredients")
+}
+
+/// Cooking instructions for a dish, in one language.
+model Recipe {
+  id         String            @id @default(uuid(7)) @db.Uuid
+  dishId     String            @map("dish_id") @db.Uuid
+  language   RecipientLanguage @default(en)
+  /// Markdown, one numbered step per line.
+  steps      String
+  difficulty RecipeDifficulty  @default(medium)
+  equipment  String?
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, language])
+  @@map("recipes")
+}
+
+enum RecipeDifficulty {
+  easy
+  medium
+  hard
+
+  @@map("recipe_difficulty")
+}
+
+/// A label for filtering and planner preferences, e.g. "high-fibre", "traditional".
+model Tag {
+  id    String @id @default(uuid(7)) @db.Uuid
+  slug  String @unique
+  label String
+
+  dishes DishTag[]
+
+  @@map("tags")
+}
+
+/// Links a dish version to a tag.
+model DishTag {
+  dishId String @map("dish_id") @db.Uuid
+  tagId  String @map("tag_id") @db.Uuid
+
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([dishId, tagId])
+  @@map("dish_tags")
+}
