@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(SW)'
+    groups:
+      dev-tooling:
+        patterns:
+          - 'eslint'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - 'prettier'
+          - 'turbo'
+          - 'vitest'
+    ignore:
+      # typescript-eslint supports TypeScript < 6.1 only; upgrade TypeScript together with it.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: 'chore(SW)'

@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, typecheck, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dyjext
+          POSTGRES_PASSWORD: dyjext_ci_only
+          POSTGRES_DB: dyjext
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dyjext -d dyjext"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://dyjext:dyjext_ci_only@localhost:5432/dyjext
+      REDIS_URL: redis://localhost:6379
+      # On pull requests, only run tasks for packages affected by the change.
+      TURBO_AFFECTED: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+      TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Restore Turborepo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm turbo run lint $TURBO_AFFECTED
+
+      - name: Typecheck
+        run: pnpm turbo run typecheck $TURBO_AFFECTED
+
+      - name: Test
+        run: pnpm turbo run test $TURBO_AFFECTED
+
+      - name: Build
+        run: pnpm turbo run build $TURBO_AFFECTED

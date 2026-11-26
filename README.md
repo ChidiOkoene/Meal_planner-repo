@@ -73,3 +73,5 @@ Branch names follow `type(scope)/short-title`, and commit messages and PR titles
 - **scope:** `Data`, `UI`, `SW` or `ML`
 
 Example: branch `feat(SW)/planner-engine-v1`, PR title `feat(SW): planner engine v1`.
+
+Every PR runs the CI workflow (formatting, lint, typecheck, tests and build). Repository settings such as branch protection are listed in [`docs/repository-settings.md`](docs/repository-settings.md).
