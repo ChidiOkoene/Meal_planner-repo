@@ -9,7 +9,7 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
 
-# Install scripts deliberately left blocked (no warning on install):
+# Install scripts deliberately left blocked (pnpm still lists them in a notice):
 # @scarf/scarf only sends download analytics for swagger-ui.
 ignoredBuiltDependencies:
   - '@scarf/scarf'

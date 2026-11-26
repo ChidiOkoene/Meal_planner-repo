@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+
+/* Design tokens. Light by default; dark follows the system setting. */
+:root {
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --surface-muted: #f3f1ec;
+  --text: #1d1b18;
+  --text-muted: #5f5a52;
+  --border: #e3dfd6;
+  --brand: #2f6b3f;
+  --brand-contrast: #ffffff;
+  --ok: #2f7d4a;
+  --warn: #a3620a;
+  --bad: #b3261e;
+  --ok-bg: #e7f4ec;
+  --warn-bg: #fdf1df;
+  --bad-bg: #fbe8e6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151412;
+    --surface: #1d1c19;
+    --surface-muted: #262420;
+    --text: #f1eee8;
+    --text-muted: #b4ada2;
+    --border: #36332d;
+    --brand: #7cc48d;
+    --brand-contrast: #10210f;
+    --ok: #7cc48d;
+    --warn: #f0b25a;
+    --bad: #f28b82;
+    --ok-bg: #1d2e22;
+    --warn-bg: #33281a;
+    --bad-bg: #3a1f1c;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-contrast: var(--brand-contrast);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn-bg: var(--warn-bg);
+  --color-bad-bg: var(--bad-bg);
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
