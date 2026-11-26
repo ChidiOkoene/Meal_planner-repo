@@ -45,9 +45,16 @@ export function createEvaluator(
     return perDay.map((items) => sumNutrients(items));
   }
 
-  /** Day indexes each dish family appears on, plus batch information. */
+  /**
+   * Day indexes each dish family appears on, plus how repeats are counted:
+   * batch-cooked dishes cover up to two days per cook; dishes needing no cooking (fruit,
+   * nuts) count every two servings as one, since the rule is about variety in cooking.
+   */
   function appearances(assignment: (MealOption | null)[]) {
-    const byFamily = new Map<string, { days: number[]; batchDays: number | null }>();
+    const byFamily = new Map<
+      string,
+      { days: number[]; batchDays: number | null; noCook: boolean }
+    >();
     assignment.forEach((option, i) => {
       if (!option) return;
       for (const { dish } of option.items) {
@@ -55,6 +62,7 @@ export function createEvaluator(
           days: [],
           // A batch covers at most two days of eating, even if it keeps longer, for variety.
           batchDays: dish.batchCookable ? Math.min(dish.keepsDays ?? 1, 2) : null,
+          noCook: dish.cookMinutes === 0,
         };
         entry.days.push(slots[i]!.day);
         byFamily.set(dish.familyId, entry);
@@ -64,7 +72,12 @@ export function createEvaluator(
   }
 
   /** Cooking sessions: batch dishes eaten within their batch window count once. */
-  function cooks(days: number[], batchDays: number | null): { cooks: number; reused: number } {
+  function cooks(
+    days: number[],
+    batchDays: number | null,
+    noCook = false,
+  ): { cooks: number; reused: number } {
+    if (noCook) return { cooks: Math.ceil(days.length / 2), reused: 0 };
     if (batchDays === null) return { cooks: days.length, reused: 0 };
     const sorted = [...days].sort((a, b) => a - b);
     let cooksCount = 0;
@@ -108,7 +121,7 @@ export function createEvaluator(
 
     let soft = 0;
     for (const [familyId, entry] of appearances(assignment)) {
-      const { cooks: cookCount, reused } = cooks(entry.days, entry.batchDays);
+      const { cooks: cookCount, reused } = cooks(entry.days, entry.batchDays, entry.noCook);
       hard += Math.max(0, cookCount - maxCooks);
       soft += reused * weights.batchReuse;
       soft -= Math.max(0, entry.days.length - 2) * weights.extraUse;
@@ -157,7 +170,7 @@ export function createEvaluator(
       }
     });
     for (const [familyId, entry] of appearances(assignment)) {
-      const { cooks: cookCount } = cooks(entry.days, entry.batchDays);
+      const { cooks: cookCount } = cooks(entry.days, entry.batchDays, entry.noCook);
       if (cookCount > maxCooks) {
         const name =
           assignment.flatMap((o) => o?.items ?? []).find((i) => i.dish.familyId === familyId)?.dish

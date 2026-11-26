@@ -76,7 +76,10 @@ export interface PlannerInput {
   weeklyBudgetMinor?: number | null;
   /** People eating the same food (scales cost, not nutrients). Default 1. */
   eaters?: number;
-  /** Times the same dish may be cooked in a week. Default 2. A batch eaten over several days counts once. */
+  /**
+   * Times the same dish may be cooked in a week. Default 2. A batch eaten over two days
+   * counts once; for dishes needing no cooking, two servings count once.
+   */
   maxCooksPerDishPerWeek?: number;
 }
 

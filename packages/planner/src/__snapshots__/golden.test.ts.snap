@@ -1,0 +1,86 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden plans (planner-1.1.0) > chewing difficulty (expected infeasible: too few soft breakfasts) 1`] = `
+{
+  "days": [
+    "2026-12-07: breakfast=¾ plate of Moi moi with pap | lunch=1½ ladles of Okra soup + ¾ wrap of Pounded yam | snack=1 bowl of Pawpaw slices | dinner=¾ plate of Beans porridge with plantain",
+    "2026-12-08: breakfast=¾ plate of Moi moi with pap | lunch=¾ plate of Beans porridge with plantain | snack=1 piece of Banana | dinner=1¼ ladles of Okra soup + 1 wrap of Unripe plantain amala",
+    "2026-12-09: breakfast=¾ plate of Moi moi with pap | lunch=1 plate of Yam porridge with greens | snack=1½ bowls of Pawpaw slices | dinner=¾ plate of Beans porridge with plantain",
+    "2026-12-10: breakfast=¾ plate of Moi moi with pap | lunch=1¼ ladles of Okra soup + 1 wrap of Amala | snack=1 piece of Banana | dinner=¾ plate of Beans porridge with plantain",
+    "2026-12-11: breakfast=1 bowl of Oats with milk and banana | lunch=1 plate of Yam porridge with greens | snack=1 bowl of Pawpaw slices | dinner=1½ ladles of Okra soup + ¾ wrap of Unripe plantain amala",
+    "2026-12-12: breakfast=¾ plate of Moi moi with pap | lunch=¾ plate of Beans porridge with plantain | snack=1 piece of Banana | dinner=1¼ ladles of Okra soup + 1 wrap of Amala",
+    "2026-12-13: breakfast=¾ plate of Moi moi with pap | lunch=1½ ladles of Okra soup + ¾ wrap of Pounded yam | snack=1 bowl of Pawpaw slices | dinner=¾ plate of Beans porridge with plantain",
+  ],
+  "status": "infeasible",
+  "unmet": [
+    "Day total outside limits: energyKcal 1119 < 1200, proteinG 49 < 50",
+    "Moi moi with pap is cooked 3 times; the limit is 2",
+    "Okra soup is cooked 3 times; the limit is 2",
+    "Beans porridge with plantain is cooked 3 times; the limit is 2",
+  ],
+}
+`;
+
+exports[`golden plans (planner-1.1.0) > groundnut allergy, cooks for self 1`] = `
+{
+  "days": [
+    "2026-12-07: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 plate of Grilled fish with boiled plantain | snack=1¼ pieces of Orange | dinner=¾ ladle of Efo riro + 1 wrap of Eba",
+    "2026-12-08: breakfast=1 bowl of Oats with milk and banana | lunch=1 ladle of Efo riro + 1 wrap of Amala | snack=1 bowl of Pawpaw slices | dinner=1 ladle of Okra soup + 1 wrap of Unripe plantain amala",
+    "2026-12-09: breakfast=¾ plate of Moi moi with pap | lunch=1 plate of Boiled plantain with egg sauce | snack=1 piece of Banana | dinner=1 ladle of Okra soup + 1 wrap of Pounded yam",
+    "2026-12-10: breakfast=¾ plate of Moi moi with pap | lunch=1¼ ladles of Okra soup + ½ wrap of Eba | snack=1 bowl of Pawpaw slices | dinner=1 plate of Ofada rice with tomato stew and fish",
+    "2026-12-11: breakfast=1 bowl of Oats with milk and banana | lunch=1 ladle of Okra soup + 1 wrap of Pounded yam | snack=1 piece of Orange | dinner=1 plate of Ofada rice with tomato stew and fish",
+    "2026-12-12: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 plate of Yam porridge with greens | snack=1 piece of Banana | dinner=1 plate of Grilled fish with boiled plantain",
+    "2026-12-13: breakfast=1 plate of Boiled plantain with egg sauce | lunch=¾ plate of Beans porridge with plantain | snack=1 piece of Orange | dinner=1 ladle of Egusi soup + 1 wrap of Unripe plantain amala",
+  ],
+  "status": "ok",
+  "unmet": [],
+}
+`;
+
+exports[`golden plans (planner-1.1.0) > hypertension only 1`] = `
+{
+  "days": [
+    "2026-12-07: breakfast=1 plate of Boiled plantain with egg sauce | lunch=1 ladle of Egusi soup + 1¼ wraps of Pounded yam | snack=1 piece of Banana | dinner=1 ladle of Efo riro + 1 wrap of Unripe plantain amala",
+    "2026-12-08: breakfast=1 plate of Moi moi with pap | lunch=1 ladle of Efo riro + 1¼ wraps of Amala | snack=1 handful of Roasted groundnuts | dinner=1¼ plates of Grilled fish with boiled plantain",
+    "2026-12-09: breakfast=1 plate of Moi moi with pap | lunch=1 bowl of Vegetable salad with grilled chicken | snack=1 bowl of Pawpaw slices | dinner=1 ladle of Egusi soup + 1¼ wraps of Eba",
+    "2026-12-10: breakfast=1 bowl of Oats with milk and banana | lunch=1 ladle of Okra soup + 1½ wraps of Unripe plantain amala | snack=1 handful of Roasted groundnuts | dinner=1¼ plates of Grilled fish with boiled plantain",
+    "2026-12-11: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 ladle of Okra soup + 1 wrap of Eba | snack=1 plate of Garden egg with groundnuts | dinner=1¼ plates of Ofada rice with tomato stew and fish",
+    "2026-12-12: breakfast=1 bowl of Oats with milk and banana | lunch=1 plate of Beans porridge with plantain | snack=1 bowl of Pawpaw slices | dinner=1¼ plates of Ofada rice with tomato stew and fish",
+    "2026-12-13: breakfast=1 plate of Boiled plantain with egg sauce | lunch=1 plate of Beans porridge with plantain | snack=1 plate of Garden egg with groundnuts | dinner=1 plate of Jollof rice with chicken",
+  ],
+  "status": "ok",
+  "unmet": [],
+}
+`;
+
+exports[`golden plans (planner-1.1.0) > type 2 diabetes and hypertension 1`] = `
+{
+  "days": [
+    "2026-12-07: breakfast=1 bowl of Oats with milk and banana | lunch=1 plate of Grilled fish with boiled plantain | snack=1 handful of Roasted groundnuts | dinner=1 ladle of Okra soup + 1 wrap of Unripe plantain amala",
+    "2026-12-08: breakfast=1 plate of Boiled plantain with egg sauce | lunch=1 ladle of Efo riro + ¾ wrap of Pounded yam | snack=1 piece of Orange | dinner=1 ladle of Okra soup + 1 wrap of Eba",
+    "2026-12-09: breakfast=1 bowl of Oats with milk and banana | lunch=1 plate of Yam porridge with greens | snack=1 plate of Garden egg with groundnuts | dinner=1 ladle of Efo riro + 1 wrap of Unripe plantain amala",
+    "2026-12-10: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 ladle of Egusi soup + 1 wrap of Pounded yam | snack=1 piece of Banana | dinner=1 plate of Jollof rice with chicken",
+    "2026-12-11: breakfast=¾ plate of Moi moi with pap | lunch=1 plate of Boiled plantain with egg sauce | snack=1 piece of Orange | dinner=1 ladle of Egusi soup + 1 wrap of Amala",
+    "2026-12-12: breakfast=¾ plate of Moi moi with pap | lunch=1 plate of Yam porridge with greens | snack=1 handful of Roasted groundnuts | dinner=1 plate of Ofada rice with tomato stew and fish",
+    "2026-12-13: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 plate of Grilled fish with boiled plantain | snack=1 plate of Garden egg with groundnuts | dinner=1 plate of Ofada rice with tomato stew and fish",
+  ],
+  "status": "ok",
+  "unmet": [],
+}
+`;
+
+exports[`golden plans (planner-1.1.0) > type 2 diabetes only 1`] = `
+{
+  "days": [
+    "2026-12-07: breakfast=1 bowl of Oats with milk and banana | lunch=1 plate of Ofada rice with tomato stew and fish | snack=1 piece of Orange | dinner=1 ladle of Efo riro + 1 wrap of Unripe plantain amala",
+    "2026-12-08: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 plate of Yam porridge with greens | snack=1 piece of Banana | dinner=1 plate of Ofada rice with tomato stew and fish",
+    "2026-12-09: breakfast=1 plate of Boiled plantain with egg sauce | lunch=1 ladle of Egusi soup + 1 wrap of Pounded yam | snack=1 plate of Garden egg with groundnuts | dinner=¾ plate of Beans porridge with plantain",
+    "2026-12-10: breakfast=1 plate of Boiled yam with egg sauce | lunch=1 ladle of Okra soup + 1 wrap of Eba | snack=1 piece of Orange | dinner=1 ladle of Egusi soup + 1 wrap of Unripe plantain amala",
+    "2026-12-11: breakfast=¾ plate of Moi moi with pap | lunch=1 plate of Boiled plantain with egg sauce | snack=1 handful of Roasted groundnuts | dinner=1 ladle of Okra soup + 1 wrap of Pounded yam",
+    "2026-12-12: breakfast=¾ plate of Moi moi with pap | lunch=1 plate of Grilled fish with boiled plantain | snack=¾ plate of Garden egg with groundnuts | dinner=1 plate of Yam porridge with greens",
+    "2026-12-13: breakfast=1 bowl of Oats with milk and banana | lunch=¾ plate of Beans porridge with plantain | snack=1 piece of Banana | dinner=1 ladle of Efo riro + 1 wrap of Eba",
+  ],
+  "status": "ok",
+  "unmet": [],
+}
+`;

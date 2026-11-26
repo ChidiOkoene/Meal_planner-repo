@@ -136,7 +136,8 @@ describe('preferences', () => {
     );
     const count = familiesIn(withFavourite).filter((id) => id === unused!.familyId).length;
     expect(count).toBeGreaterThan(0);
-    expect(count).toBeLessThanOrEqual(2); // still within the weekly repeat limit
+    // Still within the weekly repeat limit (no-cook snacks: two servings count as one cook).
+    expect(count).toBeLessThanOrEqual(unused!.cookMinutes === 0 ? 4 : 2);
   });
 });
 

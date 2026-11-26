@@ -1,6 +1,7 @@
 // Test catalogue: a subset of the development sample catalogue (packages/db seed data).
 // Approximate nutrients; for tests only.
-import { dishNutrition, type Nutrients } from '@dyjext/nutrition';
+import { type Nutrients } from '@dyjext/nutrition';
+import { type CatalogueDish, toPlannerDish } from '../catalogue.js';
 import { type PlannerDish, type PlannerTargets } from '../types.js';
 
 type Per100 = [
@@ -77,18 +78,15 @@ function per100g([energyKcal, proteinG, carbsG, fatG, fibreG, sodiumMg]: Per100)
 
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-export function fixtureDishes(
-  options: { costPerServingMinor?: number | null } = {},
-): PlannerDish[] {
+/** The fixture as raw catalogue data: ingredients with per-100 g nutrients. */
+export function fixtureCatalogue(
+  options: {
+    costPerServingMinor?: number | null;
+    status?: CatalogueDish['verificationStatus'];
+  } = {},
+): CatalogueDish[] {
   return DISHES.map((d) => {
     const id = `dish-${slug(d.name)}`;
-    const nutrition = dishNutrition(
-      d.ingredients.map(([name, grams]) => {
-        const values = INGREDIENTS[name];
-        if (!values) throw new Error(`Unknown fixture ingredient ${name}`);
-        return { name, gramsPerServing: grams, per100g: per100g(values) };
-      }),
-    );
     return {
       id,
       familyId: id,
@@ -104,11 +102,28 @@ export function fixtureDishes(
       prepMinutes: 10,
       cookMinutes: d.cook ?? 0,
       tags: d.tags ?? [],
-      ingredientIds: d.ingredients.map(([name]) => name),
-      perServing: nutrition.perServing,
+      verificationStatus: options.status ?? 'dietitian_verified',
       costPerServingMinor: options.costPerServingMinor ?? null,
+      ingredients: d.ingredients.map(([name, grams]) => {
+        const values = INGREDIENTS[name];
+        if (!values) throw new Error(`Unknown fixture ingredient ${name}`);
+        return {
+          ingredientId: name,
+          name,
+          gramsPerServing: grams,
+          isOptional: false,
+          per100g: per100g(values),
+        };
+      }),
     };
   });
+}
+
+/** The fixture as engine input. */
+export function fixtureDishes(
+  options: { costPerServingMinor?: number | null } = {},
+): PlannerDish[] {
+  return fixtureCatalogue(options).map(toPlannerDish);
 }
 
 /**
