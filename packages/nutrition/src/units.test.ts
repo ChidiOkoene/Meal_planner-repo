@@ -28,8 +28,17 @@ describe('purchaseQuantity', () => {
     expect(purchaseQuantity(120, [])).toEqual({ unit: 'g', quantity: 150, grams: 150 });
   });
 
+  it('never rounds a tiny real need down to nothing', () => {
+    // Found by the property test in CI: 0.000001 g of a 1 kg unit was bought as 0 units.
+    expect(purchaseQuantity(0.000001, [{ name: 'bag', grams: 1000.0000000000001 }]).quantity).toBe(
+      1,
+    );
+  });
+
   it('does not round up float noise', () => {
     expect(purchaseQuantity(260 * 3, riceUnits).quantity).toBe(3);
+    // 0.1 + 0.2 style noise: 780.0000000001 g is still 3 derica, not 4.
+    expect(purchaseQuantity(780.0000000001, [{ name: 'derica', grams: 260 }]).quantity).toBe(3);
   });
 
   it('never buys less than needed', () => {
