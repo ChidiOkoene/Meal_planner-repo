@@ -67,12 +67,15 @@ describe.skipIf(!hasServices)('jobs', () => {
     it('relays each event exactly once, even with two relays racing', async () => {
       await record(25);
       const [a, b] = await Promise.all([
-        relayOutboxBatch(prisma, queues.events, { batchSize: 10 }),
-        relayOutboxBatch(prisma, queues.events, { batchSize: 10 }),
+        relayOutboxBatch(prisma, queues.events, { batchSize: 10, aggregateTypes: [aggregateType] }),
+        relayOutboxBatch(prisma, queues.events, { batchSize: 10, aggregateTypes: [aggregateType] }),
       ]);
       let rest = 0;
       for (let n = -1; n !== 0;) {
-        n = await relayOutboxBatch(prisma, queues.events, { batchSize: 10 });
+        n = await relayOutboxBatch(prisma, queues.events, {
+          batchSize: 10,
+          aggregateTypes: [aggregateType],
+        });
         rest += n;
       }
       expect(a + b + rest).toBe(25);
@@ -85,10 +88,10 @@ describe.skipIf(!hasServices)('jobs', () => {
     it('does not enqueue a duplicate if an event is relayed again after a crash', async () => {
       await record(1);
       const event = await prisma.outboxEvent.findFirstOrThrow({ where: { aggregateType } });
-      await relayOutboxBatch(prisma, queues.events);
+      await relayOutboxBatch(prisma, queues.events, { aggregateTypes: [aggregateType] });
       // Simulate a crash between enqueueing and marking the row as processed.
       await prisma.outboxEvent.update({ where: { id: event.id }, data: { processedAt: null } });
-      await relayOutboxBatch(prisma, queues.events);
+      await relayOutboxBatch(prisma, queues.events, { aggregateTypes: [aggregateType] });
       const jobs = await queues.events.getJobs(['waiting', 'delayed', 'active', 'completed']);
       expect(jobs.filter((j) => j.id === event.id)).toHaveLength(1);
     });
