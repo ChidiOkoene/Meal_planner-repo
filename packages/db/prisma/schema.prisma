@@ -27,16 +27,20 @@ datasource db {
 /// A person who signs in to the web app: a payer, a staff member, or both.
 /// Recipients (parents) and vendors never sign in, so they are not users.
 model User {
-  id             String    @id @default(uuid(7)) @db.Uuid
+  id               String    @id @default(uuid(7)) @db.Uuid
   /// Subject id from the managed auth provider. Null until auth is wired up (issue #8).
-  authProviderId String?   @unique @map("auth_provider_id")
-  email          String    @unique
-  displayName    String    @map("display_name")
+  authProviderId   String?   @unique @map("auth_provider_id")
+  email            String    @unique
+  displayName      String    @map("display_name")
   /// ISO 3166-1 alpha-2 country the user lives in, e.g. "GB".
-  countryCode    String?   @map("country_code") @db.Char(2)
-  lastSignInAt   DateTime? @map("last_sign_in_at") @db.Timestamptz(6)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  countryCode      String?   @map("country_code") @db.Char(2)
+  lastSignInAt     DateTime? @map("last_sign_in_at") @db.Timestamptz(6)
+  /// Copied from the auth provider. Staff need it on to use the staff console.
+  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
+  /// When identity details were last refreshed from the auth provider.
+  identitySyncedAt DateTime? @map("identity_synced_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   staffRoles           StaffRole[]       @relation("StaffRoleUser")
   grantedStaffRoles    StaffRole[]       @relation("StaffRoleGrantedBy")

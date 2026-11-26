@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { api } from '@/lib/api';
+import { useApi } from '@/lib/api';
 import { DayCard } from './day-card';
 import { ResultStatus } from './result-status';
 import type { Ingredient, PlannerPresetSummary, PlannerPreviewResponse } from './types';
@@ -38,6 +38,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export function PlannerPreview() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const api = useApi();
 
   const presets = useQuery({
     queryKey: ['planner-presets'],

@@ -5,8 +5,7 @@ import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { LOG_REDACT_PATHS } from '@dyjext/shared';
 import { pino } from 'pino';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../app.factory.js';
-import { loadConfig } from '../config/config.js';
+import { createTestApp, type FakeAuthProvider, signIn } from '../testing/auth.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Audited } from './audited.decorator.js';
 
@@ -47,14 +46,13 @@ const hasServices = Boolean(process.env.DATABASE_URL && process.env.REDIS_URL);
 describe.skipIf(!hasServices)('audit log', () => {
   let app: NestFastifyApplication;
   let prisma: PrismaService;
+  let viewer: ReturnType<typeof signIn>;
 
   beforeAll(async () => {
-    app = await createApp(loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'silent' }), {
-      extraModules: [AuditedModule],
-    });
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    let auth: FakeAuthProvider;
+    ({ app, auth } = await createTestApp({ extraModules: [AuditedModule] }));
     prisma = app.get(PrismaService);
+    viewer = signIn(auth);
   });
   afterAll(() => app.close());
 
@@ -63,29 +61,37 @@ describe.skipIf(!hasServices)('audit log', () => {
     const res = await app.inject({
       method: 'GET',
       url: `/v1/test-audited/${id}`,
-      headers: { 'x-request-id': `req-${id}` },
+      headers: { 'x-request-id': `req-${id}`, ...viewer.headers },
     });
     expect(res.statusCode).toBe(200);
     const entries = await prisma.auditLog.findMany({ where: { entityId: id } });
     expect(entries).toHaveLength(1);
+    const viewerUser = await prisma.user.findUniqueOrThrow({
+      where: { authProviderId: viewer.providerUserId },
+    });
     expect(entries[0]).toMatchObject({
       action: 'test.viewed',
       entityType: 'test_record',
       actorType: 'user',
+      actorUserId: viewerUser.id,
       requestId: `req-${id}`,
     });
   });
 
   it('fails closed: no audit entry, no response body', async () => {
     // entity_id is a uuid column, so this id makes the audit insert fail.
-    const res = await app.inject({ method: 'GET', url: '/v1/test-audited/not-a-uuid' });
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/test-audited/not-a-uuid',
+      headers: viewer.headers,
+    });
     expect(res.statusCode).toBe(500);
     expect(res.body).not.toContain('health details');
   });
 
   it('cannot be altered or deleted afterwards', async () => {
     const id = randomUUID();
-    await app.inject({ method: 'GET', url: `/v1/test-audited/${id}` });
+    await app.inject({ method: 'GET', url: `/v1/test-audited/${id}`, headers: viewer.headers });
     await expect(
       prisma.auditLog.updateMany({ where: { entityId: id }, data: { action: 'tampered' } }),
     ).rejects.toThrow(/append-only/);
@@ -98,7 +104,7 @@ describe.skipIf(!hasServices)('audit log', () => {
 
   it('allows only purges of rows older than two years', async () => {
     const id = randomUUID();
-    await app.inject({ method: 'GET', url: `/v1/test-audited/${id}` });
+    await app.inject({ method: 'GET', url: `/v1/test-audited/${id}`, headers: viewer.headers });
     await expect(
       prisma.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT set_config('app.audit_purge', 'on', true)`;

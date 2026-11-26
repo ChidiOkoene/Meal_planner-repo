@@ -13,6 +13,7 @@
     "clean": "rm -rf .next .turbo"
   },
   "dependencies": {
+    "@clerk/nextjs": "7.10.10",
     "@dyjext/nutrition": "workspace:*",
     "@dyjext/planner": "workspace:*",
     "@dyjext/shared": "workspace:*",

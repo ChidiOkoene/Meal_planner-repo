@@ -11,6 +11,10 @@ const listOfOrigins = z
       .filter(Boolean),
   );
 
+/** An optional setting; an empty value (e.g. `KEY=` copied from .env.example) counts as unset. */
+const optional = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
+
 /** Every environment variable the API reads, validated once at startup. */
 export const configSchema = z
   .object({
@@ -32,9 +36,29 @@ export const configSchema = z
      * Master keys for encrypting health data: "id:base64key,…", newest first
      * (see packages/db/src/encryption). Required in production.
      */
-    DATA_ENCRYPTION_KEYS: z.string().optional(),
+    DATA_ENCRYPTION_KEYS: optional(z.string()),
+    /** Clerk backend secret key (sign-in). Required in production. */
+    CLERK_SECRET_KEY: optional(z.string().startsWith('sk_')),
+    /** Clerk PEM public key, for verifying tokens without a network call. Optional. */
+    CLERK_JWT_KEY: optional(z.string()).transform((v) => v?.replace(/\\n/g, '\n')),
+    /** Web origins allowed to have issued a session token. Defaults to CORS_ORIGINS. */
+    AUTH_AUTHORIZED_PARTIES: listOfOrigins,
+    /** Public URL of the web app, for links in emails (e.g. staff invitations). */
+    WEB_URL: z.string().url().default('http://localhost:3000'),
   })
+  .transform((c) => ({
+    ...c,
+    AUTH_AUTHORIZED_PARTIES:
+      c.AUTH_AUTHORIZED_PARTIES.length > 0 ? c.AUTH_AUTHORIZED_PARTIES : c.CORS_ORIGINS,
+  }))
   .superRefine((c, ctx) => {
+    if (c.NODE_ENV === 'production' && !c.CLERK_SECRET_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CLERK_SECRET_KEY'],
+        message: 'Required in production',
+      });
+    }
     if (!c.DATA_ENCRYPTION_KEYS) {
       if (c.NODE_ENV === 'production') {
         ctx.addIssue({

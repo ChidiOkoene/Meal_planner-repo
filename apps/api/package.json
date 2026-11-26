@@ -14,6 +14,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@clerk/backend": "3.33.1",
     "@dyjext/db": "workspace:*",
     "@dyjext/nutrition": "workspace:*",
     "@dyjext/planner": "workspace:*",

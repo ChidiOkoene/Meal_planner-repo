@@ -3,3 +3,4 @@
 export * from './common.js';
 export * from './catalogue.js';
 export * from './logging.js';
+export * from './staff.js';

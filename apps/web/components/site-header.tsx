@@ -1,3 +1,4 @@
+import { Show, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
 interface NavItem {
@@ -26,6 +27,19 @@ export function SiteHeader({ section, nav = [] }: { section?: string; nav?: NavI
             ))}
           </nav>
         ) : null}
+        <div className="ml-auto flex items-center gap-3 text-sm">
+          <Show when="signed-out">
+            <Link href="/sign-in" className="text-text hover:text-brand">
+              Sign in
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link href="/app" className="text-text hover:text-brand">
+              My family
+            </Link>
+            <UserButton userProfileUrl="/account" />
+          </Show>
+        </div>
       </div>
     </header>
   );

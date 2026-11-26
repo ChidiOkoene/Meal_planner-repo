@@ -58,7 +58,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       body = {
         error: {
           code: CODES[status] ?? (status >= 500 ? 'internal_error' : 'bad_request'),
-          message: status >= 500 ? 'Something went wrong' : exception.message,
+          // Deliberate errors (e.g. 503 "Sign-in is not configured") keep their message;
+          // only a plain 500 is hidden, since it may carry internal details.
+          message: status === 500 ? 'Something went wrong' : exception.message,
           requestId,
         },
       };
@@ -70,11 +72,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       };
     }
 
-    if (status >= 500) {
+    if (status === 500) {
+      // Unexpected: full stack trace for the error tracker.
       this.logger.error(
         { err: exception, requestId },
         exception instanceof Error ? exception.stack : String(exception),
       );
+    } else if (status > 500) {
+      // Deliberate (e.g. a dependency is unavailable): worth seeing, not an alert.
+      this.logger.warn({ requestId, status }, body.error.message);
     }
 
     void reply.status(status).send(body);
