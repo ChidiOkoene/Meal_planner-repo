@@ -39,8 +39,12 @@ export function purchaseQuantity(
   const halves = new Set(options.halfUnits ?? []);
   const candidates = usable.map((unit) => {
     const step = halves.has(unit.name) ? 0.5 : 1;
-    // Small tolerance so 2.0000001 units (float noise) doesn't round up to 3.
-    const quantity = Math.ceil(gramsNeeded / unit.grams / step - 1e-9) * step;
+    const steps = gramsNeeded / unit.grams / step;
+    let whole = Math.ceil(steps);
+    // Float noise (e.g. 3.0000000001 steps) shouldn't round up to an extra unit, but the
+    // tolerance must never round a real, tiny need down to nothing.
+    if (whole > 1 && steps - (whole - 1) < 1e-9) whole -= 1;
+    const quantity = whole * step;
     const grams = quantity * unit.grams;
     return { unit: unit.name, quantity, grams, waste: grams - gramsNeeded };
   });
