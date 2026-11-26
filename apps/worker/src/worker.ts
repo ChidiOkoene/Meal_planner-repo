@@ -23,6 +23,8 @@ export interface StartWorkerOptions {
   outboxPollMs?: number;
   /** Queue key prefix (tests). */
   prefix?: string;
+  /** Relay only outbox events of these aggregate types (tests sharing a database). */
+  outboxAggregateTypes?: string[];
   schedules?: Schedule[];
   /** Override handlers (tests). */
   systemHandlers?: Record<string, JobHandler>;
@@ -121,7 +123,9 @@ export async function startWorker(options: StartWorkerOptions): Promise<RunningW
   const relay = (async () => {
     while (running) {
       try {
-        const relayed = await relayOutboxBatch(prisma, queues[QUEUES.events]);
+        const relayed = await relayOutboxBatch(prisma, queues[QUEUES.events], {
+          aggregateTypes: options.outboxAggregateTypes,
+        });
         if (relayed > 0) logger.debug({ relayed }, 'Relayed outbox events');
         if (relayed > 0) continue; // more may be waiting
       } catch (error) {
