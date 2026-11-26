@@ -1,0 +1,9 @@
+{
+  "extends": "@dyjext/config/tsconfig/base.json",
+  "compilerOptions": {
+    "sourceMap": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}
