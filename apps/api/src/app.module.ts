@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { APP_CONFIG, type AppConfig } from './config/config.js';
 import { HealthModule } from './health/health.module.js';
 import { MetaModule } from './meta/meta.module.js';
+import { PlanningModule } from './planning/planning.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 
@@ -23,6 +24,7 @@ export class AppModule {
         HealthModule,
         MetaModule,
         CatalogueModule,
+        PlanningModule,
         ...extraModules,
       ],
       providers: [
