@@ -24,7 +24,8 @@
     "seed": "prisma db seed",
     "studio": "prisma studio",
     "clean": "rm -rf dist .turbo src/generated",
-    "catalogue:import": "tsx scripts/import-catalogue.ts"
+    "catalogue:import": "tsx scripts/import-catalogue.ts",
+    "keys:generate": "tsx scripts/generate-key.ts"
   },
   "devDependencies": {
     "@dyjext/config": "workspace:*",

@@ -3,20 +3,13 @@ import { type DynamicModule } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { LOG_REDACT_PATHS } from '@dyjext/shared';
 import { type FastifyServerOptions, type RawRequestDefaultExpression } from 'fastify';
 import { AppModule } from './app.module.js';
 import { PinoNestLogger } from './common/pino-nest-logger.js';
 import { type AppConfig } from './config/config.js';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{1,128}$/;
-
-/** Never write these to logs (docs/ARCHITECTURE.md §15). */
-const REDACT = [
-  'req.headers.authorization',
-  'req.headers.cookie',
-  'req.headers["x-api-key"]',
-  'res.headers["set-cookie"]',
-];
 
 /**
  * Build the configured application without starting to listen.
@@ -28,7 +21,7 @@ export async function createApp(
 ): Promise<NestFastifyApplication> {
   const logger: FastifyServerOptions['logger'] = {
     level: config.LOG_LEVEL,
-    redact: REDACT,
+    redact: { paths: LOG_REDACT_PATHS, censor: '[redacted]' },
     ...(config.NODE_ENV === 'development'
       ? { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } }
       : {}),

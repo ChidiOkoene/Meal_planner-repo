@@ -1,6 +1,7 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AuditModule } from './audit/audit.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { APP_CONFIG, type AppConfig } from './config/config.js';
@@ -21,6 +22,7 @@ export class AppModule {
         ThrottlerModule.forRoot([{ ttl: 60_000, limit: config.RATE_LIMIT_PER_MINUTE }]),
         PrismaModule,
         RedisModule,
+        AuditModule,
         HealthModule,
         MetaModule,
         CatalogueModule,

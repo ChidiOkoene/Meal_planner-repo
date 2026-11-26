@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { createPrismaClient } from '@dyjext/db';
+import { LOG_REDACT_PATHS } from '@dyjext/shared';
 import { config as loadDotenv } from 'dotenv';
 import { pino } from 'pino';
 import { loadWorkerConfig } from './config.js';
@@ -12,6 +13,7 @@ async function main(): Promise<void> {
   const config = loadWorkerConfig();
   const logger = pino({
     level: config.LOG_LEVEL,
+    redact: { paths: LOG_REDACT_PATHS, censor: '[redacted]' },
     ...(config.NODE_ENV === 'development'
       ? { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } }
       : {}),

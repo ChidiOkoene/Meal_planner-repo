@@ -14,6 +14,9 @@ describe.skipIf(!hasServices)('jobs', () => {
   let queues: QueueSet;
   const prefix = `test-${randomUUID().slice(0, 8)}`;
   const aggregateType = `test-${prefix}`;
+  // Test effect rows: outbox rows already marked processed, so no relay picks them up.
+  // (audit_log can't be used: it is append-only.)
+  const effectType = `effect-${prefix}`;
 
   beforeAll(() => {
     prisma = createPrismaClient();
@@ -23,7 +26,7 @@ describe.skipIf(!hasServices)('jobs', () => {
   afterEach(async () => {
     await prisma.outboxEvent.deleteMany({ where: { aggregateType } });
     await prisma.processedJob.deleteMany({ where: { queue: prefix } });
-    await prisma.auditLog.deleteMany({ where: { action: `test.${prefix}` } });
+    await prisma.outboxEvent.deleteMany({ where: { aggregateType: effectType } });
   });
 
   afterAll(async () => {
@@ -93,9 +96,17 @@ describe.skipIf(!hasServices)('jobs', () => {
 
   describe('runOnce', () => {
     const effect = (tx: Parameters<Parameters<typeof runOnce>[2]>[0], id: string) =>
-      tx.auditLog.create({
-        data: { actorType: 'system', action: `test.${prefix}`, entityType: 'job', entityId: id },
+      tx.outboxEvent.create({
+        data: {
+          aggregateType: effectType,
+          aggregateId: id,
+          eventType: 'test.effect',
+          payload: {},
+          processedAt: new Date(),
+        },
       });
+    const effects = (id: string) =>
+      prisma.outboxEvent.count({ where: { aggregateType: effectType, aggregateId: id } });
 
     it('applies a job once and skips repeats', async () => {
       const id = randomUUID();
@@ -107,7 +118,7 @@ describe.skipIf(!hasServices)('jobs', () => {
       );
       expect(first.skipped).toBe(false);
       expect(second.skipped).toBe(true);
-      expect(await prisma.auditLog.count({ where: { entityId: id } })).toBe(1);
+      expect(await effects(id)).toBe(1);
     });
 
     it('rolls back a crashed attempt completely, so the retry applies it once', async () => {
@@ -118,13 +129,13 @@ describe.skipIf(!hasServices)('jobs', () => {
           throw new Error('crash mid-job');
         }),
       ).rejects.toThrow('crash mid-job');
-      expect(await prisma.auditLog.count({ where: { entityId: id } })).toBe(0);
+      expect(await effects(id)).toBe(0);
 
       const retry = await runOnce(prisma, { key: `k-${id}`, queue: prefix }, (tx) =>
         effect(tx, id),
       );
       expect(retry.skipped).toBe(false);
-      expect(await prisma.auditLog.count({ where: { entityId: id } })).toBe(1);
+      expect(await effects(id)).toBe(1);
     });
 
     it('lets only one of two concurrent duplicates through', async () => {
@@ -134,7 +145,7 @@ describe.skipIf(!hasServices)('jobs', () => {
         runOnce(prisma, { key: `k-${id}`, queue: prefix }, (tx) => effect(tx, id)),
       ]);
       expect(results.filter((r) => !r.skipped)).toHaveLength(1);
-      expect(await prisma.auditLog.count({ where: { entityId: id } })).toBe(1);
+      expect(await effects(id)).toBe(1);
     });
   });
 

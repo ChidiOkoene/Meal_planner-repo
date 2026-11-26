@@ -19,6 +19,7 @@
     "@bull-board/fastify": "^9.14.0",
     "@dyjext/db": "workspace:*",
     "@dyjext/jobs": "workspace:*",
+    "@dyjext/shared": "workspace:*",
     "bullmq": "6.7.10",
     "dotenv": "^18.0.10",
     "fastify": "5.12.8",
