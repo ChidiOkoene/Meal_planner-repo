@@ -23,11 +23,14 @@
     "migrate:check": "prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code",
     "seed": "prisma db seed",
     "studio": "prisma studio",
-    "clean": "rm -rf dist .turbo src/generated"
+    "clean": "rm -rf dist .turbo src/generated",
+    "catalogue:import": "tsx scripts/import-catalogue.ts"
   },
   "devDependencies": {
     "@dyjext/config": "workspace:*",
+    "@types/node": "^26.6.10",
     "@types/pg": "^8.23.1",
+    "csv-stringify": "^6.9.0",
     "dotenv": "^18.0.10",
     "eslint": "^10.15.0",
     "prisma": "7.10.1",
@@ -38,6 +41,8 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "pg": "^8.23.1"
+    "csv-parse": "^7.0.3",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
   }
 }

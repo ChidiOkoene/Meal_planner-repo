@@ -1,7 +1,8 @@
 // Development seed data. Safe to run repeatedly: every record is upserted on a unique key.
 // All people, emails and phone numbers here are fictional.
 import { createPrismaClient } from '../src/client.js';
-import { seedCatalogue } from './seed-catalogue.js';
+import { fileURLToPath } from 'node:url';
+import { formatImportReport, importCatalogue } from '../src/catalogue-import/index.js';
 
 const prisma = createPrismaClient();
 
@@ -74,8 +75,14 @@ async function main(): Promise<void> {
     });
   }
 
-  // Sample food catalogue (development data, not dietitian-verified)
-  await seedCatalogue(prisma);
+  // Sample food catalogue (development data, not dietitian-verified), loaded with the same
+  // importer used for real data.
+  const catalogue = await importCatalogue(
+    prisma,
+    fileURLToPath(new URL('./seed-data/catalogue', import.meta.url)),
+  );
+  if (!catalogue.ok)
+    throw new Error(`Sample catalogue is invalid:\n${formatImportReport(catalogue)}`);
 
   const counts = {
     users: await prisma.user.count(),
