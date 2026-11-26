@@ -23,6 +23,16 @@ The design is in [ADR 009](adr/009-authentication-provider.md). This page is the
 5. **Keys:** copy the **Publishable key** and **Secret key** into the environment (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`) for both the API and the web app. Never commit the secret key.
 6. **Allowed origins:** set `CORS_ORIGINS` (and optionally `AUTH_AUTHORIZED_PARTIES`) to the web app's URL. The API rejects tokens issued for any other site.
 
+## If your Clerk plan has no 2-step verification
+
+On Clerk, 2-step verification (authenticator app) is a paid feature. To build and test the staff console before paying, set `STAFF_REQUIRE_TWO_FACTOR=false`:
+
+- It only works outside production. With `NODE_ENV=production`, the API refuses to start.
+- Staff roles still apply. Only the 2-step requirement is relaxed.
+- The staff console shows a red banner while it's off.
+
+Before real health data goes in, either upgrade Clerk and turn on the authenticator app, or build our own authenticator-app check for staff.
+
 ## Making the first admin
 
 Invitations need an admin, so the first one is made by hand:

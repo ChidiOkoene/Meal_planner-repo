@@ -11,6 +11,12 @@ export interface AuthUser {
   sessionId: string | null;
   /** Whether this session passed a second factor (from the token), if the token says. */
   secondFactorVerified: boolean | null;
+  /**
+   * Whether this staff member's sign-in is strong enough for the staff console: 2-step on and
+   * used this session, unless STAFF_REQUIRE_TWO_FACTOR is false (never in production).
+   * Every staff check reads this one value.
+   */
+  staffSignInOk: boolean;
 }
 
 declare module 'fastify' {

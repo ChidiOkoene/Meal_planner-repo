@@ -1,6 +1,7 @@
 import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { StaffRoleType } from '@dyjext/db';
 import { AuditService } from '../audit/audit.service.js';
+import { APP_CONFIG, type AppConfig } from '../config/config.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AUTH_PROVIDER, type AuthProviderGateway } from './clerk.gateway.js';
 import { type AuthUser } from './auth-user.js';
@@ -22,6 +23,7 @@ export class IdentityService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AUTH_PROVIDER) private readonly provider: AuthProviderGateway,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   async resolve(claims: SessionClaims): Promise<AuthUser> {
@@ -43,6 +45,9 @@ export class IdentityService {
       twoFactorEnabled: user.twoFactorEnabled,
       sessionId: claims.sid ?? null,
       secondFactorVerified: secondFactorAge === undefined ? null : secondFactorAge >= 0,
+      staffSignInOk:
+        !this.config.STAFF_REQUIRE_TWO_FACTOR ||
+        (user.twoFactorEnabled && (secondFactorAge === undefined || secondFactorAge >= 0)),
     };
   }
 
