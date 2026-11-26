@@ -5,9 +5,13 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 // visitors to the sign-in page.
 const isProtected = createRouteMatcher(['/app(.*)', '/ops(.*)', '/account(.*)']);
 
-export default clerkMiddleware(async (auth, request) => {
-  if (isProtected(request)) await auth.protect();
-});
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (isProtected(request)) await auth.protect();
+  },
+  // Our own sign-in pages, not Clerk's hosted ones.
+  { signInUrl: '/sign-in', signUpUrl: '/sign-up' },
+);
 
 export const config = {
   matcher: [
