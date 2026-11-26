@@ -1,41 +1,32 @@
-version: '3.8'
+# Local development services only. Application apps run on the host with `pnpm dev`.
+name: dyjext-care
 
 services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
+  postgres:
+    image: postgres:16-alpine
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
-    depends_on:
-      - db
-
-  llm-service:
-    build: ./llm-service
+      POSTGRES_USER: dyjext
+      POSTGRES_PASSWORD: dyjext_local_only
+      POSTGRES_DB: dyjext
     ports:
-      - "8000:8000"
-    deploy:
-      resources:
-        limits:
-          memory: 8g
-
-  db:
-    image: postgres:14
-    environment:
-      POSTGRES_USER: meal_user
-      POSTGRES_PASSWORD: meal_pass
-      POSTGRES_DB: meal_planner
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dyjext -d dyjext']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pgdata:
