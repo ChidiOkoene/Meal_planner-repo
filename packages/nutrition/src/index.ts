@@ -1,3 +1,5 @@
-// Nutrient maths and local unit conversion (derica, mudu, wrap, ladle to grams).
-// Implementation arrives in issue #13.
-export {};
+// Nutrient maths and local unit conversion. Pure functions: no database or network access.
+// See docs/ARCHITECTURE.md §9.4.
+export * from './nutrients.js';
+export * from './units.js';
+export * from './portions.js';
