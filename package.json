@@ -14,7 +14,16 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @dyjext/db generate",
+    "db:migrate": "pnpm --filter @dyjext/db migrate:dev",
+    "db:deploy": "pnpm --filter @dyjext/db migrate:deploy",
+    "db:check": "pnpm --filter @dyjext/db migrate:check",
+    "db:seed": "pnpm --filter @dyjext/db seed",
+    "db:studio": "pnpm --filter @dyjext/db studio",
+    "catalogue:import": "pnpm --filter @dyjext/db catalogue:import",
+    "keys:generate": "pnpm --silent --filter @dyjext/db keys:generate",
+    "staff:grant": "pnpm --filter @dyjext/db staff:grant"
   },
   "devDependencies": {
     "prettier": "^3.10.1",

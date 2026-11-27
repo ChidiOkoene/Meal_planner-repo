@@ -2,5 +2,36 @@
   "name": "@dyjext/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Next.js app: public site, payer app (/app), staff console (/ops) and vendor order pages (/v)."
+  "description": "Next.js app: public site, payer app (/app), staff console (/ops) and vendor order pages (/v).",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "clean": "rm -rf .next .turbo"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "7.10.10",
+    "@dyjext/nutrition": "workspace:*",
+    "@dyjext/planner": "workspace:*",
+    "@dyjext/shared": "workspace:*",
+    "@tanstack/react-query": "^5.108.4",
+    "dotenv": "^18.0.10",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@dyjext/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.10",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "^4.3.5",
+    "typescript": "~6.0.3"
+  }
 }

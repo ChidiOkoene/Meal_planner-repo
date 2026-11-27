@@ -16,11 +16,18 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist .turbo"
   },
   "devDependencies": {
     "@dyjext/config": "workspace:*",
+    "@types/node": "^26.6.10",
     "eslint": "^10.15.0",
-    "typescript": "~6.0.3"
+    "fast-check": "^4.11.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.2"
+  },
+  "dependencies": {
+    "@dyjext/nutrition": "workspace:*"
   }
 }

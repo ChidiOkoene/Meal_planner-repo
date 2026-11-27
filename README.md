@@ -54,16 +54,45 @@ Create your local environment file:
 cp .env.example .env
 ```
 
+Create the database tables and load test data:
+
+```bash
+pnpm db:deploy
+```
+
+```bash
+pnpm db:seed
+```
+
+## Sign-in
+
+Sign-in uses Clerk. Create a free development application, put its keys in `.env` (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`), and make yourself the first admin. The steps are in [`docs/authentication.md`](docs/authentication.md). The web app needs these keys to start; the API starts without them but refuses every signed-in request with "Sign-in is not configured".
+
+## Try the planner preview
+
+With the steps above done, start the API and the web app together:
+
+```bash
+pnpm dev
+```
+
+When both are up, sign in as a staff member with 2-step verification on, then open http://localhost:3000/ops/planner-preview. Pick an example parent, choose foods to avoid, and generate a week. The page uses sample dishes with estimated nutrients and illustrative limits; it is for development only and is hidden in production.
+
 ## Common commands
 
-| Command             | What it does                            |
-| ------------------- | --------------------------------------- |
-| `pnpm build`        | Build every package                     |
-| `pnpm lint`         | Lint every package                      |
-| `pnpm typecheck`    | Type-check every package                |
-| `pnpm test`         | Run tests                               |
-| `pnpm format`       | Format the repository with Prettier     |
-| `pnpm format:check` | Check formatting without changing files |
+| Command             | What it does                                                      |
+| ------------------- | ----------------------------------------------------------------- |
+| `pnpm build`        | Build every package                                               |
+| `pnpm lint`         | Lint every package                                                |
+| `pnpm typecheck`    | Type-check every package                                          |
+| `pnpm test`         | Run tests                                                         |
+| `pnpm format`       | Format the repository with Prettier                               |
+| `pnpm format:check` | Check formatting without changing files                           |
+| `pnpm db:migrate`   | Create a migration after changing the Prisma schema, and apply it |
+| `pnpm db:deploy`    | Apply existing migrations                                         |
+| `pnpm db:check`     | Fail if the schema and migrations are out of sync                 |
+| `pnpm db:seed`      | Load fictional test data (safe to re-run)                         |
+| `pnpm db:studio`    | Browse the database in Prisma Studio                              |
 
 ## Contributing
 
@@ -73,3 +102,5 @@ Branch names follow `type(scope)/short-title`, and commit messages and PR titles
 - **scope:** `Data`, `UI`, `SW` or `ML`
 
 Example: branch `feat(SW)/planner-engine-v1`, PR title `feat(SW): planner engine v1`.
+
+Every PR runs the CI workflow (formatting, lint, typecheck, tests and build). Repository settings such as branch protection are listed in [`docs/repository-settings.md`](docs/repository-settings.md).

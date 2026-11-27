@@ -4,4 +4,6 @@ dist
 .turbo
 coverage
 pnpm-lock.yaml
-docs/legacy
+packages/db/src/generated
+.next
+next-env.d.ts

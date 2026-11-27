@@ -1,0 +1,33 @@
+name,aliases,cuisine,description,meal_types,dish_type,pairs_with,serving_unit,prep_minutes,cook_minutes,batch_cookable,keeps_days,texture,tags
+Oats with milk and banana,,nigerian,"Rolled oats cooked in low-fat milk, topped with sliced banana.",breakfast,main,,bowl,2,8,no,,soft,high-fibre; quick
+Moi moi with pap,moin moin and akamu,nigerian,"Steamed bean pudding with egg and peppers, served with maize pap.",breakfast,main,,plate,30,45,yes,3,soft,traditional; high-fibre; high-protein
+Boiled yam with egg sauce,,nigerian,Boiled yam with eggs scrambled in a light tomato and onion sauce.,breakfast,main,,plate,10,20,no,,regular,traditional; quick
+Akara with pap,,nigerian,Fried bean fritters served with maize pap.,breakfast,main,,plate,30,20,no,,regular,traditional; fried; high-protein
+Whole-wheat bread with egg and tomato,,nigerian,Whole-wheat bread with boiled egg and sliced tomato.,breakfast,main,,plate,5,10,no,,regular,quick
+Sweet potato with egg sauce,,nigerian,Boiled sweet potato with eggs in a light tomato sauce.,breakfast,main,,plate,10,20,no,,regular,quick
+Boiled plantain with egg sauce,,nigerian,Boiled unripe plantain with eggs in a light tomato sauce.,breakfast; lunch,main,,plate,10,20,no,,regular,low-gi; quick
+Jollof rice with chicken,,nigerian,"Rice cooked in a pepper and tomato base, with chicken.",lunch; dinner,main,,plate,20,45,yes,3,regular,traditional
+Ofada rice with tomato stew and fish,,nigerian,Local brown rice with a pepper and tomato stew and tilapia.,lunch; dinner,main,,plate,20,50,yes,3,regular,traditional; high-fibre; low-gi
+Beans porridge with plantain,ewa and plantain,nigerian,Black-eyed beans cooked soft with unripe plantain and palm oil.,lunch; dinner,main,,plate,10,60,yes,3,soft,traditional; high-fibre; low-gi; high-protein
+Yam porridge with greens,asaro,nigerian,Yam cooked soft in a palm-oil pepper sauce with ugu leaves.,lunch; dinner,main,,plate,15,30,no,,soft,traditional
+Spaghetti with vegetables and chicken,,nigerian,"Spaghetti in a light tomato sauce with carrots, cabbage and chicken.",lunch; dinner,main,,plate,15,25,no,,regular,quick
+Vegetable salad with grilled chicken,,nigerian,"Cabbage, carrot, cucumber, tomato and avocado with grilled chicken.",lunch; dinner,main,,bowl,15,15,no,,regular,high-fibre; low-gi; high-protein; quick
+Fried rice with chicken,,nigerian,"Rice stir-fried with carrots, cabbage and onions, with chicken.",lunch; dinner,main,,plate,20,40,yes,3,regular,
+Grilled fish with boiled plantain,,nigerian,Grilled mackerel with boiled unripe plantain and a fresh pepper sauce.,lunch; dinner,main,,plate,15,30,no,,regular,low-gi; high-protein
+Goat meat pepper soup,,nigerian,"Light, spicy broth with goat meat. Eaten on its own.",dinner,main,,bowl,10,60,yes,3,regular,traditional; high-protein
+Efo riro,,nigerian,"Rich vegetable soup of green amaranth with peppers, beef and fish.",lunch; dinner,soup,swallow,ladle,25,30,yes,4,regular,traditional; high-fibre
+Egusi soup,,nigerian,"Ground melon seed soup with ugu leaves, beef and fish.",lunch; dinner,soup,swallow,ladle,20,40,yes,4,regular,traditional; high-protein
+Okra soup,,nigerian,Draw soup of chopped okra with ugu and tilapia.,lunch; dinner,soup,swallow,ladle,15,25,yes,3,soft,traditional; high-fibre
+Vegetable soup,edikang ikong,nigerian,Ugu and amaranth leaf soup with beef and dried fish.,lunch; dinner,soup,swallow,ladle,25,30,yes,4,regular,traditional; high-fibre
+Eba,,nigerian,Garri stirred into hot water.,lunch; dinner,swallow,soup,wrap,2,3,no,,soft,traditional; quick
+Amala,,nigerian,Yam flour swallow.,lunch; dinner,swallow,soup,wrap,2,8,no,,soft,traditional
+Pounded yam,,nigerian,Boiled yam pounded smooth.,lunch; dinner,swallow,soup,wrap,10,25,no,,soft,traditional
+Semovita,,nigerian,Semolina swallow.,lunch; dinner,swallow,soup,wrap,2,8,no,,soft,
+Unripe plantain amala,amala ogede,nigerian,Swallow made from unripe plantain flour; slower to raise blood sugar.,lunch; dinner,swallow,soup,wrap,2,8,no,,soft,low-gi; high-fibre
+Oat swallow,,nigerian,Swallow made from blended oats.,lunch; dinner,swallow,soup,wrap,5,8,no,,soft,low-gi; high-fibre
+Roasted groundnuts,,nigerian,A small handful of roasted groundnuts.,snack,snack,,handful,0,0,no,,regular,low-gi
+Orange,,nigerian,One medium orange.,snack,snack,,piece,1,0,no,,regular,low-gi
+Garden egg with groundnuts,,nigerian,Fresh garden eggs with a few roasted groundnuts.,snack,snack,,plate,2,0,no,,regular,traditional; low-gi; high-fibre
+Pawpaw slices,,nigerian,A bowl of fresh pawpaw.,snack,snack,,bowl,3,0,no,,soft,
+Watermelon,,nigerian,Two slices of watermelon.,snack,snack,,slice,2,0,no,,soft,
+Banana,,nigerian,One medium banana.,snack,snack,,piece,0,0,no,,soft,

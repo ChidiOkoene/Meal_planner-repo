@@ -1,0 +1,8 @@
+{
+  "extends": "@dyjext/config/tsconfig/library.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

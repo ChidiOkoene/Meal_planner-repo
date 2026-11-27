@@ -3,7 +3,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'coverage/**', '.turbo/**', 'eslint.config.js'] },
+  { ignores: ['dist/**', 'coverage/**', '.turbo/**', '**/generated/**', 'eslint.config.js'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
@@ -15,8 +15,16 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       'no-console': 'warn',
     },
+  },
+  {
+    // Command-line scripts and seeds report progress on the console.
+    files: ['prisma/**', 'scripts/**'],
+    rules: { 'no-console': 'off' },
   },
 );

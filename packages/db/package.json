@@ -13,14 +13,38 @@
     }
   },
   "scripts": {
+    "generate": "prisma generate",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "clean": "rm -rf dist .turbo"
+    "test": "vitest run --passWithNoTests",
+    "migrate:dev": "sh -c 'prisma migrate dev \"$@\" && prisma generate' --",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:check": "prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code",
+    "seed": "prisma db seed",
+    "studio": "prisma studio",
+    "clean": "rm -rf dist .turbo src/generated",
+    "catalogue:import": "tsx scripts/import-catalogue.ts",
+    "keys:generate": "tsx scripts/generate-key.ts",
+    "staff:grant": "tsx scripts/grant-staff-role.ts"
   },
   "devDependencies": {
     "@dyjext/config": "workspace:*",
+    "@types/node": "^26.6.10",
+    "@types/pg": "^8.23.1",
+    "csv-stringify": "^6.9.0",
+    "dotenv": "^18.0.10",
     "eslint": "^10.15.0",
-    "typescript": "~6.0.3"
+    "prisma": "7.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.2"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "csv-parse": "^7.0.3",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
   }
 }

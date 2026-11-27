@@ -1,0 +1,618 @@
+// Dyjext Care database schema. See docs/ARCHITECTURE.md §7.
+//
+// Conventions (apply to every model added later):
+// - Primary keys are UUIDv7 (`@default(uuid(7)) @db.Uuid`): sortable and safe to expose.
+//   Prisma generates them in the application (PostgreSQL 16 has no built-in UUIDv7), so raw
+//   SQL inserts must supply an id.
+// - Tables and columns are snake_case in the database (`@@map` / `@map`), camelCase in code.
+// - Every table has `created_at`; mutable tables also have `updated_at`.
+// - Timestamps are `timestamptz`.
+// - Money is an integer amount in minor units (`amount_minor BIGINT`) plus a `CHAR(3)` currency.
+//   Never floats.
+// - Health data fields are encrypted at the application layer (added in issue #9).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Identity ────────────────────────────────────────────────────────────────
+
+/// A person who signs in to the web app: a payer, a staff member, or both.
+/// Recipients (parents) and vendors never sign in, so they are not users.
+model User {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  /// Subject id from the managed auth provider. Null until auth is wired up (issue #8).
+  authProviderId   String?   @unique @map("auth_provider_id")
+  email            String    @unique
+  displayName      String    @map("display_name")
+  /// ISO 3166-1 alpha-2 country the user lives in, e.g. "GB".
+  countryCode      String?   @map("country_code") @db.Char(2)
+  lastSignInAt     DateTime? @map("last_sign_in_at") @db.Timestamptz(6)
+  /// Copied from the auth provider. Staff need it on to use the staff console.
+  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
+  /// When identity details were last refreshed from the auth provider.
+  identitySyncedAt DateTime? @map("identity_synced_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffRoles           StaffRole[]       @relation("StaffRoleUser")
+  grantedStaffRoles    StaffRole[]       @relation("StaffRoleGrantedBy")
+  householdMemberships HouseholdMember[]
+  auditEntries         AuditLog[]
+
+  @@map("users")
+}
+
+/// Staff roles granted to a user. Any signed-in user can act as a payer;
+/// these roles add access to the ops console.
+model StaffRole {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  role        StaffRoleType
+  grantedById String?       @map("granted_by_id") @db.Uuid
+  grantedAt   DateTime      @default(now()) @map("granted_at") @db.Timestamptz(6)
+  /// Set when the role is removed. Rows are kept for the audit trail.
+  revokedAt   DateTime?     @map("revoked_at") @db.Timestamptz(6)
+
+  user      User  @relation("StaffRoleUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy User? @relation("StaffRoleGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, role])
+  @@map("staff_roles")
+}
+
+enum StaffRoleType {
+  dietitian
+  ops
+  admin
+
+  @@map("staff_role_type")
+}
+
+// ─── Households ──────────────────────────────────────────────────────────────
+
+/// The unit that pays: one or more payers abroad looking after one or more recipients at home.
+model Household {
+  id                       String          @id @default(uuid(7)) @db.Uuid
+  name                     String
+  status                   HouseholdStatus @default(onboarding)
+  /// Currency the payers are billed in, e.g. "GBP".
+  billingCurrency          String          @map("billing_currency") @db.Char(3)
+  /// Weekly food budget in the recipient market's currency, in minor units (kobo for NGN).
+  weeklyFoodBudgetMinor    BigInt?         @map("weekly_food_budget_minor")
+  weeklyFoodBudgetCurrency String?         @map("weekly_food_budget_currency") @db.Char(3)
+  createdAt                DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  members    HouseholdMember[]
+  recipients Recipient[]
+
+  @@map("households")
+}
+
+enum HouseholdStatus {
+  onboarding
+  active
+  paused
+  closed
+
+  @@map("household_status")
+}
+
+/// Links a user (payer) to a household.
+model HouseholdMember {
+  id          String              @id @default(uuid(7)) @db.Uuid
+  householdId String              @map("household_id") @db.Uuid
+  userId      String              @map("user_id") @db.Uuid
+  role        HouseholdMemberRole @default(member)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+  @@index([userId])
+  @@map("household_members")
+}
+
+enum HouseholdMemberRole {
+  /// Manages billing and can invite other members.
+  owner
+  member
+
+  @@map("household_member_role")
+}
+
+/// The parent who receives meal plans and deliveries. Reached only through WhatsApp.
+model Recipient {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  householdId     String            @map("household_id") @db.Uuid
+  displayName     String            @map("display_name")
+  /// WhatsApp number in E.164 format, e.g. "+2348012345678".
+  phoneE164       String            @unique @map("phone_e164")
+  phoneVerifiedAt DateTime?         @map("phone_verified_at") @db.Timestamptz(6)
+  language        RecipientLanguage @default(en)
+  status          RecipientStatus   @default(invited)
+  /// IANA timezone used for the weekly schedule.
+  timezone        String            @default("Africa/Lagos")
+  addressId       String?           @unique @map("address_id") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  address   Address?  @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  consents  Consent[]
+
+  @@index([householdId])
+  @@index([status])
+  @@map("recipients")
+}
+
+enum RecipientLanguage {
+  /// English
+  en
+  /// Nigerian Pidgin
+  pcm
+  /// Yoruba
+  yo
+  /// Igbo
+  ig
+  /// Hausa
+  ha
+
+  @@map("recipient_language")
+}
+
+enum RecipientStatus {
+  /// Payer added them; consent request sent.
+  invited
+  /// Agreed on WhatsApp; intake not finished.
+  consented
+  /// Receiving weekly plans.
+  active
+  paused
+  closed
+
+  @@map("recipient_status")
+}
+
+/// A consent given (and possibly later revoked) by the recipient themself, with evidence.
+/// No health data is stored for a recipient until `health_data_processing` consent exists.
+model Consent {
+  id                String         @id @default(uuid(7)) @db.Uuid
+  recipientId       String         @map("recipient_id") @db.Uuid
+  type              ConsentType
+  method            ConsentMethod
+  /// WhatsApp message id of the reply that granted consent, when given on WhatsApp.
+  evidenceMessageId String?        @map("evidence_message_id")
+  grantedAt         DateTime       @map("granted_at") @db.Timestamptz(6)
+  revokedAt         DateTime?      @map("revoked_at") @db.Timestamptz(6)
+  revokedMethod     ConsentMethod? @map("revoked_method")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipient Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, type])
+  @@map("consents")
+}
+
+enum ConsentType {
+  health_data_processing
+  whatsapp_messaging
+  share_with_payer
+
+  @@map("consent_type")
+}
+
+enum ConsentMethod {
+  whatsapp_reply
+  dietitian_call
+  /// Recipient sent STOP.
+  whatsapp_stop
+
+  @@map("consent_method")
+}
+
+/// A delivery address. Lagos addresses often rely on landmarks, so that field is first-class.
+model Address {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  line1       String
+  line2       String?
+  /// Neighbourhood or area, e.g. "Surulere".
+  area        String?
+  city        String
+  /// State or region, e.g. "Lagos".
+  region      String?
+  countryCode String   @map("country_code") @db.Char(2)
+  /// Directions for the vendor, e.g. "Opposite the filling station, blue gate".
+  landmark    String?
+  latitude    Decimal? @db.Decimal(9, 6)
+  longitude   Decimal? @db.Decimal(9, 6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  recipient Recipient?
+
+  @@map("addresses")
+}
+
+// ─── Infrastructure ──────────────────────────────────────────────────────────
+
+/// Transactional outbox. Domain events are written in the same transaction as the change
+/// that caused them, then delivered to job queues by the worker (issue #6).
+model OutboxEvent {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  aggregateType String    @map("aggregate_type")
+  aggregateId   String    @map("aggregate_id") @db.Uuid
+  eventType     String    @map("event_type")
+  payload       Json      @db.JsonB
+  occurredAt    DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  /// Null until the worker has handed the event to its queue.
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
+  attempts      Int       @default(0)
+  lastError     String?   @map("last_error")
+
+  @@index([processedAt, occurredAt])
+  @@map("outbox_events")
+}
+
+/// Jobs whose effects have been committed. A job handler writes this row in the same
+/// transaction as its own changes, so a job retried after a crash never applies them twice.
+model ProcessedJob {
+  /// Idempotency key, e.g. "send-plan:<plan id>" or the outbox event id.
+  key         String   @id
+  queue       String
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+
+  @@index([completedAt])
+  @@map("processed_jobs")
+}
+
+/// Every inbound webhook (Stripe, Paystack, WhatsApp), stored before processing so each
+/// event is handled exactly once and can be replayed.
+model WebhookEvent {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  provider          WebhookProvider
+  /// The provider's own event id, used for idempotency.
+  externalId        String          @map("external_id")
+  eventType         String          @map("event_type")
+  payload           Json            @db.JsonB
+  signatureVerified Boolean         @map("signature_verified")
+  receivedAt        DateTime        @default(now()) @map("received_at") @db.Timestamptz(6)
+  processedAt       DateTime?       @map("processed_at") @db.Timestamptz(6)
+  error             String?
+
+  @@unique([provider, externalId])
+  @@index([processedAt])
+  @@map("webhook_events")
+}
+
+enum WebhookProvider {
+  stripe
+  paystack
+  whatsapp
+
+  @@map("webhook_provider")
+}
+
+/// Append-only record of who viewed or changed sensitive data (health profiles, plans, money).
+/// The application's database role is denied UPDATE and DELETE on this table in issue #9.
+model AuditLog {
+  id          String         @id @default(uuid(7)) @db.Uuid
+  actorType   AuditActorType @map("actor_type")
+  /// Set when the actor is a signed-in user.
+  actorUserId String?        @map("actor_user_id") @db.Uuid
+  /// e.g. "health_profile.viewed", "meal_plan.approved".
+  action      String
+  entityType  String         @map("entity_type")
+  entityId    String         @map("entity_id") @db.Uuid
+  requestId   String?        @map("request_id")
+  metadata    Json?          @db.JsonB
+  occurredAt  DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(6)
+
+  actorUser User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([occurredAt])
+  @@map("audit_log")
+}
+
+enum AuditActorType {
+  user
+  system
+  recipient
+  vendor
+
+  @@map("audit_actor_type")
+}
+
+// ─── Catalogue ───────────────────────────────────────────────────────────────
+// The food database: the product's core asset (docs/ARCHITECTURE.md §7.3).
+// Nutrient values and grams are stored as double precision: they are measurements with
+// natural uncertainty, not money, and the planner does floating-point maths on them.
+
+/// A raw food bought at the market, e.g. "Yam", "Egusi (ground melon seed)".
+model Ingredient {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  name              String             @unique
+  /// Local names in English, Yoruba, Igbo, Hausa and Pidgin, e.g. ["ewedu", "jute leaves"].
+  aliases           String[]
+  category          IngredientCategory
+  /// Bought monthly rather than weekly (oil, salt, seasoning).
+  isPantryStaple    Boolean            @default(false) @map("is_pantry_staple")
+  /// Days it keeps after purchase, for planning when to cook what.
+  perishabilityDays Int?               @map("perishability_days")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  nutrientProfile NutrientProfile?
+  localUnits      LocalUnit[]
+  dishIngredients DishIngredient[]
+
+  @@index([category])
+  @@map("ingredients")
+}
+
+enum IngredientCategory {
+  staple
+  legume
+  protein
+  vegetable
+  fruit
+  oil
+  seasoning
+  dairy
+  nut_seed
+  beverage
+
+  @@map("ingredient_category")
+}
+
+/// Nutrients per 100 g of the edible portion, as purchased (raw unless the name says otherwise).
+model NutrientProfile {
+  id              String             @id @default(uuid(7)) @db.Uuid
+  ingredientId    String             @unique @map("ingredient_id") @db.Uuid
+  energyKcal      Float              @map("energy_kcal")
+  proteinG        Float              @map("protein_g")
+  carbsG          Float              @map("carbs_g")
+  fatG            Float              @map("fat_g")
+  fibreG          Float              @map("fibre_g")
+  /// Total sugars, when known.
+  sugarsG         Float?             @map("sugars_g")
+  sodiumMg        Float              @map("sodium_mg")
+  /// Relevant for blood pressure; optional until sourced data covers every ingredient.
+  potassiumMg     Float?             @map("potassium_mg")
+  /// Glycaemic index (glucose = 100), when a published value exists.
+  glycaemicIndex  Int?               @map("glycaemic_index")
+  source          NutrientSource
+  /// Table and row, URL or lab report id.
+  sourceReference String?            @map("source_reference")
+  confidence      NutrientConfidence
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@map("nutrient_profiles")
+}
+
+enum NutrientSource {
+  /// FAO/INFOODS West African Food Composition Table (2019).
+  wafct_2019
+  /// Kenya Food Composition Tables.
+  kenya_fct
+  usda_fooddata
+  lab_analysis
+  product_label
+  /// Approximation for development only; must be replaced before dishes are verified.
+  estimate
+
+  @@map("nutrient_source")
+}
+
+enum NutrientConfidence {
+  high
+  medium
+  low
+
+  @@map("nutrient_confidence")
+}
+
+/// A local measure and its weight in grams, e.g. a derica of rice ≈ 260 g.
+/// Weights vary by market and seller, so a typical range is kept alongside the median.
+model LocalUnit {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  /// Null for generic units that apply to any ingredient.
+  ingredientId String?       @map("ingredient_id") @db.Uuid
+  /// Singular name, e.g. "derica", "mudu", "bunch", "tuber".
+  name         String
+  kind         LocalUnitKind
+  grams        Float
+  gramsP10     Float?        @map("grams_p10")
+  gramsP90     Float?        @map("grams_p90")
+  notes        String?
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ingredient Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, name])
+  @@map("local_units")
+}
+
+enum LocalUnitKind {
+  /// How it is sold at the market (shopping lists).
+  purchase
+  /// How it is measured in the kitchen.
+  household
+
+  @@map("local_unit_kind")
+}
+
+/// One version of a dish. Versions of the same dish share a `familyId`.
+/// A verified version is never edited: changing it creates the next version as a draft,
+/// and the planner keeps using the latest verified version until the new one is verified.
+/// Meal plans record the exact version they used.
+model Dish {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  familyId           String           @map("family_id") @db.Uuid
+  version            Int              @default(1)
+  name               String
+  /// Other names the dish is known by, e.g. ["ewa agoyin"].
+  aliases            String[]
+  cuisine            Cuisine
+  description        String?
+  mealTypes          MealType[]       @map("meal_types")
+  dishType           DishType         @map("dish_type")
+  /// Dish types this is eaten with, e.g. a soup pairs with a swallow.
+  pairsWith          DishType[]       @map("pairs_with")
+  /// What one serving is called, e.g. "plate", "wrap", "ladle", "piece".
+  servingUnit        String           @map("serving_unit")
+  prepMinutes        Int              @default(0) @map("prep_minutes")
+  cookMinutes        Int              @default(0) @map("cook_minutes")
+  /// Cooked once and eaten over several days (most soups and stews).
+  batchCookable      Boolean          @default(false) @map("batch_cookable")
+  /// Days it keeps after cooking, refrigerated.
+  keepsDays          Int?             @map("keeps_days")
+  texture            DishTexture      @default(regular)
+  verificationStatus DishVerification @default(draft) @map("verification_status")
+  verifiedById       String?          @map("verified_by_id") @db.Uuid
+  verifiedAt         DateTime?        @map("verified_at") @db.Timestamptz(6)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  ingredients DishIngredient[]
+  recipes     Recipe[]
+  tags        DishTag[]
+
+  @@unique([familyId, version])
+  @@index([verificationStatus])
+  @@index([dishType])
+  @@map("dishes")
+}
+
+enum Cuisine {
+  nigerian
+  cameroonian
+  ghanaian
+  kenyan
+  south_african
+  american
+
+  @@map("cuisine")
+}
+
+enum MealType {
+  breakfast
+  lunch
+  dinner
+  snack
+
+  @@map("meal_type")
+}
+
+enum DishType {
+  /// A complete meal on its own.
+  main
+  /// Eaten with a swallow.
+  soup
+  /// Eba, amala, pounded yam and similar.
+  swallow
+  side
+  snack
+  drink
+
+  @@map("dish_type")
+}
+
+enum DishTexture {
+  regular
+  /// Suitable for people with chewing difficulty.
+  soft
+
+  @@map("dish_texture")
+}
+
+enum DishVerification {
+  draft
+  dietitian_verified
+  /// No longer offered; kept because past plans reference it.
+  retired
+
+  @@map("dish_verification")
+}
+
+/// An ingredient in one serving of a dish, in grams as purchased (raw).
+model DishIngredient {
+  id              String  @id @default(uuid(7)) @db.Uuid
+  dishId          String  @map("dish_id") @db.Uuid
+  ingredientId    String  @map("ingredient_id") @db.Uuid
+  gramsPerServing Float   @map("grams_per_serving")
+  isOptional      Boolean @default(false) @map("is_optional")
+  /// e.g. "chopped", "ground".
+  preparation     String?
+  sortOrder       Int     @default(0) @map("sort_order")
+
+  dish       Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([dishId, ingredientId])
+  @@map("dish_ingredients")
+}
+
+/// Cooking instructions for a dish, in one language.
+model Recipe {
+  id         String            @id @default(uuid(7)) @db.Uuid
+  dishId     String            @map("dish_id") @db.Uuid
+  language   RecipientLanguage @default(en)
+  /// Markdown, one numbered step per line.
+  steps      String
+  difficulty RecipeDifficulty  @default(medium)
+  equipment  String?
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, language])
+  @@map("recipes")
+}
+
+enum RecipeDifficulty {
+  easy
+  medium
+  hard
+
+  @@map("recipe_difficulty")
+}
+
+/// A label for filtering and planner preferences, e.g. "high-fibre", "traditional".
+model Tag {
+  id    String @id @default(uuid(7)) @db.Uuid
+  slug  String @unique
+  label String
+
+  dishes DishTag[]
+
+  @@map("tags")
+}
+
+/// Links a dish version to a tag.
+model DishTag {
+  dishId String @map("dish_id") @db.Uuid
+  tagId  String @map("tag_id") @db.Uuid
+
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([dishId, tagId])
+  @@map("dish_tags")
+}

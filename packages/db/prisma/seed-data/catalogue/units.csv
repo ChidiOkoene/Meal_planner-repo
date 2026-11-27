@@ -1,0 +1,20 @@
+ingredient,unit,kind,grams,grams_p10,grams_p90,notes
+White rice (raw),derica,purchase,260,230,290,Tomato-paste tin measure; varies by seller
+White rice (raw),mudu,purchase,1300,1100,1500,
+Ofada rice (raw),derica,purchase,250,220,280,
+Black-eyed beans (dry),derica,purchase,240,210,270,
+Black-eyed beans (dry),mudu,purchase,1250,1050,1450,
+Garri (cassava flakes),derica,purchase,200,180,230,
+Garri (cassava flakes),mudu,purchase,1000,850,1150,
+Egusi (ground melon seed),derica,purchase,150,130,170,
+Ground crayfish,derica,purchase,90,75,105,
+Yam (raw),tuber,purchase,2000,1500,3000,
+Unripe plantain,finger,purchase,250,200,320,
+Fluted pumpkin leaves (ugu),bunch,purchase,300,200,400,
+Green amaranth (tete),bunch,purchase,250,180,350,
+Tomatoes,small basket,purchase,1500,1200,2000,
+Eggs,crate,purchase,1650,1550,1800,30 eggs
+Eggs,egg,household,55,50,60,
+Palm oil,cooking spoon,household,12,10,15,
+Vegetable oil,cooking spoon,household,12,10,15,
+,teaspoon,household,5,,,

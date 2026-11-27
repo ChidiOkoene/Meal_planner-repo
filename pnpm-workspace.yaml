@@ -1,3 +1,15 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# pnpm blocks dependency install scripts by default. Only these are allowed:
+# Prisma downloads its schema engine, esbuild (used by tsx) installs its binary.
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+
+# Install scripts deliberately left blocked (pnpm still lists them in a notice):
+# @scarf/scarf only sends download analytics for swagger-ui.
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
