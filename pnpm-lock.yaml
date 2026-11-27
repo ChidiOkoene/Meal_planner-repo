@@ -160,6 +160,9 @@ importers:
       '@dyjext/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@dyjext/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       bullmq:
         specifier: 6.7.10
         version: 6.7.10(ioredis@6.1.0)(pg@8.23.1)

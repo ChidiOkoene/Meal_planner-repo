@@ -44,7 +44,9 @@ describe.skipIf(!hasServices)('worker', () => {
   let prisma: PrismaClient;
   let redis: Redis;
   const prefix = `test-${randomUUID().slice(0, 8)}`;
-  const action = `test.${prefix}`;
+  // Test effect rows: outbox rows already marked processed, so the relay never picks them up.
+  // (audit_log can't be used: it is append-only.)
+  const effectType = `effect-${prefix}`;
 
   beforeAll(() => {
     prisma = createPrismaClient();
@@ -52,8 +54,7 @@ describe.skipIf(!hasServices)('worker', () => {
   });
 
   afterAll(async () => {
-    await prisma.auditLog.deleteMany({ where: { action } });
-    await prisma.outboxEvent.deleteMany({ where: { aggregateType: prefix } });
+    await prisma.outboxEvent.deleteMany({ where: { aggregateType: { in: [prefix, effectType] } } });
     await prisma.processedJob.deleteMany({ where: { queue: prefix } });
     const keys = await redis.keys(`${prefix}:*`);
     if (keys.length > 0) await redis.del(...keys);
@@ -61,21 +62,21 @@ describe.skipIf(!hasServices)('worker', () => {
     await prisma.$disconnect();
   });
 
-  /** The test effect: one audit row per job, applied through runOnce. */
+  /** The test effect: one row per job, applied through runOnce. */
   const applyEffect = (key: string) =>
     runOnce(prisma, { key, queue: prefix }, (tx) =>
-      tx.auditLog.create({
+      tx.outboxEvent.create({
         data: {
-          actorType: 'system',
-          action,
-          entityType: 'job',
-          entityId: randomUUID(),
-          metadata: { key },
+          aggregateType: effectType,
+          aggregateId: randomUUID(),
+          eventType: key,
+          payload: {},
+          processedAt: new Date(),
         },
       }),
     );
   const effectCount = (key: string) =>
-    prisma.auditLog.count({ where: { action, metadata: { path: ['key'], equals: key } } });
+    prisma.outboxEvent.count({ where: { aggregateType: effectType, eventType: key } });
 
   it('delivers a committed domain event to its handler exactly once', async () => {
     const seen: string[] = [];

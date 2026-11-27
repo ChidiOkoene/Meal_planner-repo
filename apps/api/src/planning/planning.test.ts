@@ -1,4 +1,5 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { generateKeyEntry } from '@dyjext/db';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../app.factory.js';
 import { loadConfig } from '../config/config.js';
@@ -93,7 +94,12 @@ describe.skipIf(!hasServices)('planner preview', () => {
 
   it('is hidden in production', async () => {
     const prod = await createApp(
-      loadConfig({ ...process.env, NODE_ENV: 'production', LOG_LEVEL: 'silent' }),
+      loadConfig({
+        ...process.env,
+        NODE_ENV: 'production',
+        LOG_LEVEL: 'silent',
+        DATA_ENCRYPTION_KEYS: generateKeyEntry('test'),
+      }),
     );
     await prod.init();
     await prod.getHttpAdapter().getInstance().ready();

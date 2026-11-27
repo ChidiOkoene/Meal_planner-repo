@@ -4,3 +4,5 @@ export { createPrismaClient, type CreatePrismaClientOptions } from './client.js'
 export * from './generated/prisma/client.js';
 // Catalogue import from CSV (issue #12). Also used by the seed.
 export * from './catalogue-import/index.js';
+// Envelope encryption for sensitive fields (issue #9).
+export * from './encryption/index.js';
