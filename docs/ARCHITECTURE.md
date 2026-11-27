@@ -7,29 +7,32 @@
 
 ## 1. Product in one paragraph
 
-A family member living abroad (the **Payer**, e.g. in London) subscribes so that a parent at home
-(the **Recipient**, e.g. in Lagos) living with diabetes or hypertension eats healthy, familiar food
-every week. Each week the system builds a condition-aware meal plan from a verified catalogue of
-local dishes, a **dietitian** approves it, it is sent to the Recipient on **WhatsApp**, the
-ingredients are bought and delivered by a local **Vendor**, and the Payer gets delivery
-confirmation plus a monthly progress report. Money is collected in GBP/USD/EUR/CAD and paid out
-locally in NGN (later GHS, KES, ZAR).
+A **Payer**, living anywhere (London, Houston or Lagos), subscribes so that a **Recipient** living
+with diabetes or hypertension eats healthy, familiar food every week. The Recipient is often a
+parent, but can be another relative, or the Payer themself. Each week the system builds a
+condition-aware meal plan from a verified catalogue of local dishes, a **dietitian** approves it,
+and it is sent to the Recipient on **WhatsApp**. In delivery areas (**full care**), a local
+**Vendor** buys and delivers the ingredients and the Payer gets a delivery photo; elsewhere
+(**plan only**), the Recipient gets a shopping list and buys their own food. The Payer also gets a
+monthly progress report. Money is collected in the Payer's currency (NGN, GBP, USD, EUR, CAD) and
+paid out to vendors locally in NGN (later GHS, KES, ZAR). See ADR 010.
 
 ### Actors
 
-| Actor                               | Channel                                   | What they do                                                                   |
-| ----------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------ |
-| **Payer** (diaspora child)          | Web app (desktop + mobile)                | Signs up, adds a parent, pays subscription, tops up food wallet, reads reports |
-| **Recipient** (parent)              | WhatsApp only — no app, no password       | Gives consent, receives plan, asks for swaps, answers check-ins, logs readings |
-| **Dietitian** (staff/contractor)    | Ops console                               | Runs intake, sets nutrition targets, approves plans, handles escalations       |
-| **Ops agent** (staff)               | Ops console                               | Manages vendors, prices, orders, deliveries, support                           |
-| **Vendor** (market runner / grocer) | WhatsApp + one-page order link (no login) | Confirms order, enters actual prices, uploads delivery photo                   |
-| **Admin**                           | Ops console                               | Catalogue, users, finance, configuration                                       |
+| Actor                                      | Channel                                   | What they do                                                                   |
+| ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------ |
+| **Payer** (anywhere; may be the Recipient) | Web app (desktop + mobile)                | Signs up, adds a parent, relative or themself, pays, reads reports             |
+| **Recipient** (parent, relative or self)   | WhatsApp (plus the web app if self)       | Gives consent, receives plan, asks for swaps, answers check-ins, logs readings |
+| **Dietitian** (staff/contractor)           | Ops console                               | Runs intake, sets nutrition targets, approves plans, handles escalations       |
+| **Ops agent** (staff)                      | Ops console                               | Manages vendors, prices, orders, deliveries, support                           |
+| **Vendor** (market runner / grocer)        | WhatsApp + one-page order link (no login) | Confirms order, enters actual prices, uploads delivery photo                   |
+| **Admin**                                  | Ops console                               | Catalogue, users, finance, configuration                                       |
 
 ### MVP scope (Phase 1)
 
 - **One city:** Lagos. **One cuisine:** Nigerian. **Two conditions:** type 2 diabetes, hypertension.
-- **Payer currencies:** GBP first, USD second.
+- **Payer currencies:** NGN and GBP first, USD second. Payers can live anywhere.
+- **Service tiers:** full care (with delivery) in Lagos; plan only (shopping list, no delivery) anywhere.
 - ~100 verified dishes, 1–3 vendors, 1–2 dietitians, target 50–200 households.
 
 Everything below is designed so a second city/cuisine/currency is **configuration + data**, not new code.
@@ -75,8 +78,8 @@ flowchart LR
     Blob[(Object storage<br/>images, photos, reports)]
   end
 
-  Stripe[[Stripe<br/>subscriptions & wallet top-ups]]
-  Paystack[[Paystack<br/>NGN vendor payouts]]
+  Stripe[[Stripe<br/>GBP/USD/EUR/CAD payments]]
+  Paystack[[Paystack<br/>NGN payments & vendor payouts]]
   WA[[WhatsApp Business<br/>Cloud API]]
   LLM[[Claude API]]
   FX[[FX rate provider]]
@@ -97,8 +100,8 @@ flowchart LR
   Vendor --> Web
   WA <--> API
   API <--> Stripe
+  API <--> Paystack
   Worker --> Paystack
-  Paystack --> API
   Worker --> LLM
   Worker --> FX
   Web --> Auth
@@ -123,7 +126,7 @@ flowchart LR
 | Web app                    | **Next.js (App Router) + Tailwind + shadcn/ui**                                                                 | Marketing pages (SEO) + Payer app + Ops console in one app with role-based route groups | CRA (deprecated; current `frontend/` is the untouched CRA template)             |
 | Auth                       | **Managed provider** (Clerk or Auth0) issuing JWTs; API verifies                                                | Passwordless/social login, MFA for staff, no password storage liability                 | Hand-rolled auth                                                                |
 | Recipient / Vendor channel | **WhatsApp Business Platform (Cloud API)** via Meta directly                                                    | Where parents and vendors already are                                                   | Native mobile app (parents won't install), SMS (no rich media, poor UX)         |
-| Payer payments             | **Stripe Billing + Checkout**                                                                                   | Subscriptions, cards, Apple/Google Pay, multi-currency, dunning                         | —                                                                               |
+| Payer payments             | **Stripe Billing + Checkout** (GBP/USD/EUR/CAD) and **Paystack** (NGN), behind one `PaymentGateway` interface   | Stripe: cards, Apple/Google Pay, dunning. Paystack: Nigerian cards, bank transfer, USSD | One provider for all (Nigerian cards often fail on foreign processors)          |
 | Local payouts              | **Paystack Transfers** (NGN). Flutterwave as fallback; M-Pesa B2C for Kenya later                               | Reliable NGN bank payouts with webhooks                                                 | Manual bank transfers (no audit trail)                                          |
 | AI                         | **Claude API** via `@anthropic-ai/sdk` (see §11)                                                                | Message drafting, swap suggestions, report narratives                                   | Self-hosted LLaMA (GPU cost/ops with no benefit at this scale)                  |
 | Object storage             | **S3-compatible** (AWS S3 or Cloudflare R2)                                                                     | Dish images, delivery photos, PDF reports                                               | —                                                                               |
@@ -256,7 +259,7 @@ erDiagram
 
 **households / recipients**
 
-- `recipients`: `display_name`, `phone_e164` (unique), `phone_verified_at`, `language` (`en`, `pcm` Nigerian Pidgin, `yo`, `ig`, `ha`), `market_id`, `address_id`, `status` (`invited` → `consented` → `active` → `paused` → `closed`).
+- `recipients`: `display_name`, `phone_e164` (unique), `phone_verified_at`, `language` (`en`, `pcm` Nigerian Pidgin, `yo`, `ig`, `ha`), `market_id`, `address_id`, `relationship` (`self`, `parent`, `relative`, `other`), `user_id` (set when the Recipient is the Payer), `service_tier` (`full_care`, `plan_only`), `status` (`invited` → `consented` → `active` → `paused` → `closed`).
 - `consents`: `recipient_id`, `type` (`health_data_processing`, `whatsapp_messaging`, `share_with_payer`), `granted_at`, `method` (`whatsapp_reply`, `dietitian_call`), `evidence_message_id`, `revoked_at`.
 
 **health**
@@ -296,7 +299,8 @@ erDiagram
 
 **billing** (see §10)
 
-- `subscriptions`: `stripe_subscription_id`, `plan_code`, `currency`, `status`, `current_period_end`.
+- `subscriptions`: `provider` (`stripe`, `paystack`), `provider_subscription_id`, `plan_code`, `service_tier`, `currency`, `status`, `current_period_end`.
+- `prices`: `plan_code`, `service_tier`, `currency`, `amount_minor`: set per currency, never converted from another currency.
 - `ledger_accounts`, `ledger_entries`, `payouts`, `fx_conversions`, `webhook_events` (idempotency).
 
 ---
@@ -315,13 +319,13 @@ sequenceDiagram
   actor D as Dietitian
   participant S as Stripe
 
-  P->>API: Sign up, create household, add parent (name, phone, city, language)
+  P->>API: Sign up, create household, "Who is this for?" (me / parent / relative), name, phone, city, language
   API->>WA: Template "intro_consent" to parent's number
   WA->>R: "Hello Mama, your son Tunde has asked Dyjext to help with healthy meals... Reply YES to agree"
   R-->>WA: YES
   WA-->>API: Inbound webhook → consent recorded (evidence = message id)
   API->>P: Email + dashboard: "Mama agreed. Book her intake call."
-  P->>S: Stripe Checkout: subscription + first wallet top-up
+  P->>S: Checkout (Stripe, or Paystack for NGN): subscription + first food payment
   S-->>API: checkout.session.completed (webhook) → subscription active, wallet credited
   D->>R: Intake call (voice/WhatsApp call)
   D->>API: Ops console: health profile, likes/dislikes, budget, sets nutrition targets (signed)
@@ -330,7 +334,8 @@ sequenceDiagram
 
 Rules:
 
-- No health data is stored until the Recipient's own consent is recorded.
+- No health data is stored until the Recipient's own consent is recorded. This applies to self-subscribers too; their WhatsApp reply also proves the number is theirs.
+- The service tier follows the Recipient's location: full care in delivery areas, plan only elsewhere (no vendor, no food charges).
 - If the Recipient says no or doesn't respond within 7 days, the Payer is told and nothing further is sent.
 - Out-of-scope conditions (e.g. kidney disease, insulin-dependent pregnancy) → dietitian refers out; no plan generated.
 
@@ -418,13 +423,14 @@ generatePlan(input: PlannerInput, opts: { seed: string; engineVersion: string })
 - **Targets** (dietitian-signed): per-meal and per-day bands for kcal, carbs, protein, sodium, fibre, added sugar.
 - **Hard exclusions:** allergies, intolerances, religious rules, disliked dishes/ingredients, texture needs.
 - **Candidate dishes:** only `dietitian_verified` dishes, with nutrients per serving.
+- **Availability** (plan only, outside Nigeria): where each ingredient can be bought in the Recipient's country (`supermarket`, `african_shop`, `online`, `not_available`), and dietitian-approved substitutes. See ADR 010.
 - **Prices:** current price per ingredient per market + FX rate.
 - **Budget:** weekly food budget (Payer setting) in local currency.
 - **Context:** meal slots per day (e.g. breakfast, lunch, dinner, 1 snack), cooking ability, batch-cooking preference, household size eating the same food, last 4 weeks of plans (for variety), seasonal availability.
 
 ### 9.2 Algorithm
 
-1. **Filter** — drop any dish that violates a hard exclusion or whose _minimum_ portion already exceeds a per-meal limit.
+1. **Filter** — drop any dish that violates a hard exclusion or whose _minimum_ portion already exceeds a per-meal limit. Abroad, also drop any dish with a required ingredient the Recipient can't buy (directly or through an approved substitute); substitutes replace the original before nutrients are computed.
 2. **Portioning** — for each remaining (dish, slot) pair, compute the portion multiplier (within allowed bounds, e.g. 0.5×–1.5×, snapped to sensible local units) that best fits the slot's targets. Low-carb pairing logic: e.g. a soup is paired with a smaller swallow portion, or with a lower-GI swallow, to hit the carb band.
 3. **Construct** — greedy assignment of slots ordered by most-constrained first, honouring pairings (soup ↔ swallow) and batch-cook groups (one pot of soup covers 2–3 days).
 4. **Improve** — local search (swap / replace moves, simulated annealing, fixed iteration budget) maximising the score below while all hard constraints hold.
@@ -452,6 +458,7 @@ Score weights live in config (`planner_weights` table, versioned) so dietitians 
 2. Subtract pantry staples (oil, salt, seasoning cubes) — these go on a **monthly** list.
 3. Convert grams → **purchasable local units** (round up to nearest derica/mudu/bunch/piece), using the market's `local_units` table.
 4. Price with current price observations; produce `est_total` with a ±range from the unit and price variance.
+5. Abroad (plan only): use the substitute's name, group the list by where to buy (supermarket, African or Caribbean shop, online), and use metric or local retail units instead of market units; no prices.
 
 ### 9.5 Swaps
 
@@ -472,7 +479,7 @@ integer-programming solver (e.g. OR-Tools CP-SAT in a small Python sidecar) behi
 
 ### 10.1 Revenue streams
 
-1. **Care subscription** (monthly, Stripe Billing, Payer currency).
+1. **Care subscription** (monthly, in the Payer's currency, through Stripe or Paystack; full care or plan only).
 2. **Service fee on groceries** (% of basket, shown transparently).
 3. **FX spread** (small, disclosed margin between mid-market rate and applied rate).
 4. **Add-ons**: extra dietitian consultations, cooked-meal deliveries (Phase 2).
@@ -519,6 +526,7 @@ _Figures illustrative._
 - Every outbound money call carries an idempotency key derived from the ledger transaction id.
 - Daily reconciliation job: Stripe balance transactions and Paystack transfers vs ledger; mismatches raise an ops alert.
 - Prices quoted to the Payer in their currency are **locked at plan-lock time** using the snapshot FX rate.
+- When the Payer's currency is the food currency (e.g. an NGN Payer with a Lagos Recipient), no FX rate or FX margin applies.
 
 ---
 
@@ -597,8 +605,8 @@ enforced by a NestJS guard plus Postgres row-level security as defence in depth.
 
 | Route group  | Audience | Key screens                                                                                                                                                                                     |
 | ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`          | Public   | Landing, pricing, how it works, FAQ, blog (SEO for diaspora searches)                                                                                                                           |
-| `/app`       | Payer    | Onboarding wizard, household dashboard (this week's plan, delivery status + photo), wallet & billing, monthly reports, messages from dietitian, settings                                        |
+| `/`          | Public   | Landing, pricing (per currency), how it works, FAQ, blog (SEO for families abroad and in Nigeria)                                                                                               |
+| `/app`       | Payer    | Onboarding wizard ("Who is this for?"), dashboard (this week's plan, delivery status + photo for full care), billing, monthly reports, messages from dietitian, settings                        |
 | `/ops`       | Staff    | Review queue (plans with nutrient bars vs targets), recipient profiles, catalogue editor, vendor & price management, orders board (Kanban by status), escalations inbox, finance/reconciliation |
 | `/v/[token]` | Vendor   | Single mobile page: order items, price inputs, photo upload                                                                                                                                     |
 
@@ -608,19 +616,19 @@ Mobile-first, accessible (WCAG AA), light/dark, i18n-ready. Server components fo
 
 ## 15. Security, privacy and compliance
 
-| Area              | Measure                                                                                                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Regulations       | UK GDPR & EU GDPR (Payer side; health data is special-category), Nigeria **NDPA 2023**; later Ghana DPA, Kenya DPA 2019, South Africa POPIA. DPIA completed before launch |
-| Lawful basis      | Explicit consent from the **Recipient** for health data; Payer sees only what the Recipient agreed to share (`share_with_payer` consent)                                  |
-| Encryption        | TLS everywhere; DB encryption at rest; application-level envelope encryption for 🔒 fields with KMS-managed keys                                                          |
-| Access            | RBAC + resource scoping + Postgres RLS; staff MFA mandatory; least-privilege DB roles per app                                                                             |
-| Audit             | Every read of a health profile and every plan/money change written to append-only `audit_log`                                                                             |
-| Secrets           | Platform secret manager; never in repo; rotated; `.env` git-ignored                                                                                                       |
-| Data minimisation | Readings and messages retained per policy (e.g. 24 months), then deleted/anonymised; subject access & deletion requests supported                                         |
-| Webhooks          | Signature verification (Stripe, Paystack, Meta); replay protection via event-id idempotency                                                                               |
-| App security      | Input validation (zod) on every endpoint; rate limiting; CSP; dependency scanning (Dependabot) and secret scanning in CI                                                  |
-| Clinical safety   | Dietitian sign-off on targets and dish data; no automated medical advice; red-flag escalation templates reviewed clinically; wording is "support", never "treatment"      |
-| Vendor fraud      | Photo proof + Recipient confirmation before settlement; price outlier detection vs market median; payout holds for new vendors                                            |
+| Area              | Measure                                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regulations       | Nigeria **NDPA 2023** (Recipients, and Payers in Nigeria); UK GDPR & EU GDPR (Payers there; health data is special-category); later Ghana DPA, Kenya DPA 2019, POPIA. DPIA before launch |
+| Lawful basis      | Explicit consent from the **Recipient** for health data; Payer sees only what the Recipient agreed to share (`share_with_payer` consent)                                                 |
+| Encryption        | TLS everywhere; DB encryption at rest; application-level envelope encryption for 🔒 fields with KMS-managed keys                                                                         |
+| Access            | RBAC + resource scoping + Postgres RLS; staff MFA mandatory; least-privilege DB roles per app                                                                                            |
+| Audit             | Every read of a health profile and every plan/money change written to append-only `audit_log`                                                                                            |
+| Secrets           | Platform secret manager; never in repo; rotated; `.env` git-ignored                                                                                                                      |
+| Data minimisation | Readings and messages retained per policy (e.g. 24 months), then deleted/anonymised; subject access & deletion requests supported                                                        |
+| Webhooks          | Signature verification (Stripe, Paystack, Meta); replay protection via event-id idempotency                                                                                              |
+| App security      | Input validation (zod) on every endpoint; rate limiting; CSP; dependency scanning (Dependabot) and secret scanning in CI                                                                 |
+| Clinical safety   | Dietitian sign-off on targets and dish data; no automated medical advice; red-flag escalation templates reviewed clinically; wording is "support", never "treatment"                     |
+| Vendor fraud      | Photo proof + Recipient confirmation before settlement; price outlier detection vs market median; payout holds for new vendors                                                           |
 
 ---
 
@@ -694,7 +702,8 @@ Mobile-first, accessible (WCAG AA), light/dark, i18n-ready. Server components fo
 | 006 | Double-entry ledger with minor units and FX snapshots  | Accepted                      |
 | 007 | Managed PaaS for Phase 1; AWS + Terraform from Phase 3 | Accepted                      |
 | 008 | Food wallet vs. per-order card charge                  | **Open — needs legal advice** |
-| 009 | Which auth provider (Clerk vs Auth0)                   | Open                          |
+| 009 | Clerk for sign-in; built-in staff 2-step               | Accepted                      |
+| 010 | Payers anywhere, self-subscribers, two service tiers   | Accepted                      |
 
 Full ADRs go in `docs/adr/NNN-title.md` using the format: Context → Decision → Consequences.
 
@@ -705,6 +714,6 @@ Full ADRs go in `docs/adr/NNN-title.md` using the format: Context → Decision �
 1. **Legal entity & licensing:** UK company + Nigerian entity/partner? Food wallet vs per-order charging (ADR 008)?
 2. **Dietitian partner:** who signs off targets and dishes; are they registered (e.g. with the Dietitians Association of Nigeria / HCPC in the UK)?
 3. **Launch market:** confirm Lagos + UK payers; which Lagos areas can vendors deliver to reliably?
-4. **Pricing:** subscription tiers and service-fee % to test in Phase 0.
+4. **Pricing:** subscription prices per currency (including an affordable naira price) and per tier (full care, plan only), and the service-fee % to test in Phase 0.
 5. **Brand:** keep "Dyjext" or rename for the care proposition?
 6. **Data sources:** licence/attribution for food composition tables; budget for lab-verifying top 30 dishes?
