@@ -36,3 +36,6 @@ Thumbs.db
 
 # Next.js generated type file
 next-env.d.ts
+
+# Local Redis snapshots
+*.rdb

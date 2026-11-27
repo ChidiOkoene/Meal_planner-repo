@@ -259,6 +259,18 @@ model OutboxEvent {
   @@map("outbox_events")
 }
 
+/// Jobs whose effects have been committed. A job handler writes this row in the same
+/// transaction as its own changes, so a job retried after a crash never applies them twice.
+model ProcessedJob {
+  /// Idempotency key, e.g. "send-plan:<plan id>" or the outbox event id.
+  key         String   @id
+  queue       String
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+
+  @@index([completedAt])
+  @@map("processed_jobs")
+}
+
 /// Every inbound webhook (Stripe, Paystack, WhatsApp), stored before processing so each
 /// event is handled exactly once and can be replayed.
 model WebhookEvent {
