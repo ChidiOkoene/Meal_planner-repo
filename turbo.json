@@ -21,6 +21,7 @@
       "env": ["DATABASE_URL", "REDIS_URL"]
     },
     "dev": {
+      "dependsOn": ["^build", "generate"],
       "cache": false,
       "persistent": true
     },

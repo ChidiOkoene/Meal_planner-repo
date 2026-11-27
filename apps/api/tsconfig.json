@@ -1,0 +1,10 @@
+{
+  "extends": "@dyjext/config/tsconfig/base.json",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "noEmit": true
+  },
+  "include": ["src", "vitest.config.ts"]
+}

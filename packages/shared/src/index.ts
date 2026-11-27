@@ -1,3 +1,3 @@
-// Shared zod schemas, DTO types, enums and money helpers used by web, API and worker.
-// Implementation arrives in the API skeleton (issue #5).
-export {};
+// Shared zod schemas and types used by the web app, API and worker.
+// One definition serves both request validation (API) and form validation (web).
+export * from './common.js';
