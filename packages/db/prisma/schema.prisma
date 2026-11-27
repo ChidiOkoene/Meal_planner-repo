@@ -42,10 +42,13 @@ model User {
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  staffRoles           StaffRole[]       @relation("StaffRoleUser")
-  grantedStaffRoles    StaffRole[]       @relation("StaffRoleGrantedBy")
-  householdMemberships HouseholdMember[]
-  auditEntries         AuditLog[]
+  staffRoles             StaffRole[]             @relation("StaffRoleUser")
+  staffTwoFactor         StaffTwoFactor?
+  staffBackupCodes       StaffBackupCode[]
+  staffTwoFactorSessions StaffTwoFactorSession[]
+  grantedStaffRoles      StaffRole[]             @relation("StaffRoleGrantedBy")
+  householdMemberships   HouseholdMember[]
+  auditEntries           AuditLog[]
 
   @@map("users")
 }
@@ -74,6 +77,64 @@ enum StaffRoleType {
   admin
 
   @@map("staff_role_type")
+}
+
+/// A staff member's authenticator app (time-based one-time codes, RFC 6238).
+/// Built in so staff 2-step verification works on any auth-provider plan.
+model StaffTwoFactor {
+  userId          String    @id @map("user_id") @db.Uuid
+  /// The shared secret, envelope-encrypted (enc:v1:…). Never stored or logged in plain text.
+  secretEncrypted String    @map("secret_encrypted")
+  /// Null until the person proves the app works by entering a first code.
+  confirmedAt     DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  /// Time step of the last accepted code, so a code can never be used twice.
+  lastUsedStep    Int?      @map("last_used_step")
+  /// Wrong codes in a row; reset by a right one.
+  failedAttempts  Int       @default(0) @map("failed_attempts")
+  /// Set after too many wrong codes; no code is checked until then.
+  lockedUntil     DateTime? @map("locked_until") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("staff_two_factor")
+}
+
+/// One-time backup codes for when the phone is lost. Only a hash is stored.
+model StaffBackupCode {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @unique @map("code_hash")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("staff_backup_codes")
+}
+
+/// A sign-in session that passed the staff authenticator check, until `expiresAt`.
+model StaffTwoFactorSession {
+  /// The auth provider's session id (the `sid` claim).
+  sessionId  String               @id @map("session_id")
+  userId     String               @map("user_id") @db.Uuid
+  method     StaffTwoFactorMethod
+  verifiedAt DateTime             @default(now()) @map("verified_at") @db.Timestamptz(6)
+  expiresAt  DateTime             @map("expires_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("staff_two_factor_sessions")
+}
+
+enum StaffTwoFactorMethod {
+  authenticator_app
+  backup_code
+
+  @@map("staff_two_factor_method")
 }
 
 // ─── Households ──────────────────────────────────────────────────────────────

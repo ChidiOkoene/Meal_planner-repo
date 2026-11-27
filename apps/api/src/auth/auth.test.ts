@@ -114,6 +114,42 @@ describe.skipIf(!hasServices)('authentication and access control', () => {
     });
   });
 
+  describe('relaxing 2-step for testing', () => {
+    it('lets staff in without 2-step only when switched off outside production, and says so', async () => {
+      const { app: relaxed, auth: relaxedAuth } = await createTestApp({
+        env: { STAFF_REQUIRE_TWO_FACTOR: 'false' },
+      });
+      try {
+        const admin = signIn(relaxedAuth, { staffRole: 'admin', twoFactor: false });
+        expect(
+          (await relaxed.inject({ method: 'GET', url: '/v1/ops/dishes', headers: admin.headers }))
+            .statusCode,
+        ).toBe(200);
+        expect(
+          (await relaxed.inject({ method: 'GET', url: '/v1/me', headers: admin.headers })).json(),
+        ).toMatchObject({
+          staff: { unlocked: true, twoFactorRequired: false },
+        });
+        // Roles still apply: a family member is still kept out.
+        const family = signIn(relaxedAuth);
+        expect(
+          (await relaxed.inject({ method: 'GET', url: '/v1/ops/dishes', headers: family.headers }))
+            .statusCode,
+        ).toBe(403);
+      } finally {
+        await relaxed.close();
+      }
+    });
+
+    it('keeps requiring 2-step by default', async () => {
+      const admin = signIn(auth, { staffRole: 'admin', twoFactor: false });
+      expect((await get('/v1/ops/dishes', admin.headers)).statusCode).toBe(403);
+      expect((await get('/v1/me', admin.headers)).json()).toMatchObject({
+        staff: { unlocked: false, twoFactorRequired: true },
+      });
+    });
+  });
+
   describe('staff', () => {
     it('applies an invited role once, on first sign-in, then clears it from the provider', async () => {
       const dietitian = signIn(auth, { staffRole: 'dietitian' });
