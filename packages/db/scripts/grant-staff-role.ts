@@ -35,7 +35,7 @@ try {
       });
     });
     console.log(
-      `${email} is now ${role}. They need 2-step verification on to use the staff console.`,
+      `${email} is now ${role}. They set up an authenticator app the first time they open the staff console.`,
     );
   }
 } finally {

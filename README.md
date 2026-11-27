@@ -76,7 +76,7 @@ With the steps above done, start the API and the web app together:
 pnpm dev
 ```
 
-When both are up, sign in as a staff member with 2-step verification on, then open http://localhost:3000/ops/planner-preview. Pick an example parent, choose foods to avoid, and generate a week. The page uses sample dishes with estimated nutrients and illustrative limits; it is for development only and is hidden in production.
+When both are up, sign in as a staff member (set up the authenticator app when asked), then open http://localhost:3000/ops/planner-preview. Pick an example parent, choose foods to avoid, and generate a week. The page uses sample dishes with estimated nutrients and illustrative limits; it is for development only and is hidden in production.
 
 ## Common commands
 

@@ -27,7 +27,8 @@ export function useApi() {
       const response = await fetch(`/api${path}`, {
         ...init,
         headers: {
-          'content-type': 'application/json',
+          // Only with a body: the API rejects an empty body that claims to be JSON.
+          ...(init?.body ? { 'content-type': 'application/json' } : {}),
           ...(token ? { authorization: `Bearer ${token}` } : {}),
           ...init?.headers,
         },
@@ -53,6 +54,12 @@ export interface Me {
   email: string;
   displayName: string;
   staffRoles: ('dietitian' | 'ops' | 'admin')[];
-  staff: { twoFactorEnabled: boolean; unlocked: boolean; twoFactorRequired: boolean } | null;
+  staff: {
+    twoFactorEnabled: boolean;
+    /** The built-in authenticator app is set up. */
+    authenticatorApp: boolean;
+    unlocked: boolean;
+    twoFactorRequired: boolean;
+  } | null;
   households: { id: string; name: string; status: string; role: string }[];
 }
