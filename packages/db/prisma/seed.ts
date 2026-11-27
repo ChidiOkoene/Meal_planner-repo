@@ -1,6 +1,7 @@
 // Development seed data. Safe to run repeatedly: every record is upserted on a unique key.
 // All people, emails and phone numbers here are fictional.
 import { createPrismaClient } from '../src/client.js';
+import { seedCatalogue } from './seed-catalogue.js';
 
 const prisma = createPrismaClient();
 
@@ -73,10 +74,15 @@ async function main(): Promise<void> {
     });
   }
 
+  // Sample food catalogue (development data, not dietitian-verified)
+  await seedCatalogue(prisma);
+
   const counts = {
     users: await prisma.user.count(),
     households: await prisma.household.count(),
     recipients: await prisma.recipient.count(),
+    ingredients: await prisma.ingredient.count(),
+    dishes: await prisma.dish.count(),
   };
   console.log('Seed complete', counts);
 }

@@ -1,6 +1,7 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { APP_CONFIG, type AppConfig } from './config/config.js';
 import { HealthModule } from './health/health.module.js';
@@ -21,6 +22,7 @@ export class AppModule {
         RedisModule,
         HealthModule,
         MetaModule,
+        CatalogueModule,
         ...extraModules,
       ],
       providers: [
