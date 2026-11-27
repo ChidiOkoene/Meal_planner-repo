@@ -20,7 +20,8 @@
     "db:deploy": "pnpm --filter @dyjext/db migrate:deploy",
     "db:check": "pnpm --filter @dyjext/db migrate:check",
     "db:seed": "pnpm --filter @dyjext/db seed",
-    "db:studio": "pnpm --filter @dyjext/db studio"
+    "db:studio": "pnpm --filter @dyjext/db studio",
+    "catalogue:import": "pnpm --filter @dyjext/db catalogue:import"
   },
   "devDependencies": {
     "prettier": "^3.10.1",

@@ -1,0 +1,47 @@
+name,aliases,category,pantry_staple,perishability_days,energy_kcal,protein_g,carbs_g,fat_g,fibre_g,sodium_mg,potassium_mg,glycaemic_index,source,source_reference,confidence
+White rice (raw),rice,staple,no,365,360,6.7,80,0.6,1.3,5,86,73,estimate,Development sample data,medium
+Ofada rice (raw),ofada; local brown rice,staple,no,180,362,7.5,76,2.7,3.5,5,220,55,estimate,Development sample data,medium
+Yam (raw),isu; ji; doya,staple,no,30,118,1.5,28,0.2,4.1,9,816,54,estimate,Development sample data,medium
+Garri (cassava flakes),gari,staple,no,180,360,1.2,87,0.5,2,10,300,70,estimate,Development sample data,medium
+Yam flour (elubo),elubo; amala flour,staple,no,180,340,3.5,82,0.4,4,10,900,60,estimate,Development sample data,low
+Unripe plantain flour,elubo ogede,staple,no,180,340,3,80,0.8,6,10,1100,40,estimate,Development sample data,low
+Semolina,semovita; semo,staple,no,180,360,12.7,73,1.1,3.9,1,186,65,estimate,Development sample data,medium
+Rolled oats,oats; quaker,staple,no,270,389,16.9,66,6.9,10.6,2,429,55,estimate,Development sample data,medium
+Maize pap powder (ogi),ogi; akamu; koko,staple,no,90,355,8,76,3,5,5,250,66,estimate,Development sample data,low
+Whole-wheat bread,wheat bread,staple,no,5,247,13,41,3.4,7,450,250,69,estimate,Development sample data,medium
+Spaghetti (dry),pasta,staple,no,365,371,13,75,1.5,3.2,6,223,49,estimate,Development sample data,medium
+Unripe plantain,ogede; green plantain,staple,no,7,122,1.3,32,0.4,2.3,4,499,40,estimate,Development sample data,medium
+Sweet potato,anamo,staple,no,21,86,1.6,20,0.1,3,55,337,63,estimate,Development sample data,medium
+Black-eyed beans (dry),ewa; beans; oloyin,legume,no,365,336,23.5,60,1.3,10.6,16,1112,42,estimate,Development sample data,medium
+Egusi (ground melon seed),egusi; agushi,nut_seed,no,90,557,28,15,47,3,25,650,,estimate,Development sample data,low
+Groundnuts (roasted),peanuts; epa; gyada,nut_seed,no,60,585,24,21,50,8,18,658,14,estimate,Development sample data,medium
+Locust beans (iru),iru; ogiri; dawadawa,seasoning,yes,30,400,35,15,25,10,900,,,estimate,Development sample data,low
+"Chicken (skinless, raw)",chicken,protein,no,2,120,22.5,0,2.6,0,45,370,,estimate,Development sample data,medium
+Lean beef (raw),beef; eran,protein,no,2,150,21,0,7,0,60,330,,estimate,Development sample data,medium
+Goat meat (raw),goat; eran ewure,protein,no,2,109,20.6,0,2.3,0,82,385,,estimate,Development sample data,medium
+Tilapia (raw),tilapia; eja,protein,no,2,96,20,0,1.7,0,52,302,,estimate,Development sample data,medium
+Mackerel (raw),titus; mackerel,protein,no,2,205,18.6,0,13.9,0,90,314,,estimate,Development sample data,medium
+Dried fish,eja kika; panla; stockfish,protein,no,90,290,62,0,2.5,0,400,,,estimate,Development sample data,low
+Ground crayfish,crayfish; ede,protein,yes,90,320,60,3,5,0,2400,,,estimate,Development sample data,low
+Eggs,egg; eyin; akwa,protein,no,21,143,12.6,0.7,9.5,0,142,138,,estimate,Development sample data,medium
+Fluted pumpkin leaves (ugu),ugu,vegetable,no,3,47,4,6,1,3.5,20,400,,estimate,Development sample data,low
+Green amaranth (tete),tete; efo tete; spinach,vegetable,no,3,23,2.5,4,0.3,2.2,20,611,,estimate,Development sample data,medium
+Okra,ila; okwuru,vegetable,no,4,33,1.9,7.5,0.2,3.2,7,299,,estimate,Development sample data,medium
+Tomatoes,tomato; tomati,vegetable,no,5,18,0.9,3.9,0.2,1.2,5,237,,estimate,Development sample data,medium
+Onions,alubosa,vegetable,no,30,40,1.1,9.3,0.1,1.7,4,146,,estimate,Development sample data,medium
+Red bell pepper (tatashe),tatashe,vegetable,no,7,31,1,6,0.3,2.1,4,211,,estimate,Development sample data,medium
+Scotch bonnet pepper,ata rodo,vegetable,no,7,40,1.9,9,0.4,1.5,7,322,,estimate,Development sample data,medium
+Garden egg,igba; anara,vegetable,no,7,25,1,6,0.2,3,2,229,,estimate,Development sample data,medium
+Cabbage,,vegetable,no,14,25,1.3,5.8,0.1,2.5,18,170,,estimate,Development sample data,medium
+Carrots,carrot,vegetable,no,14,41,0.9,9.6,0.2,2.8,69,320,,estimate,Development sample data,medium
+Cucumber,,vegetable,no,7,15,0.7,3.6,0.1,0.5,2,147,,estimate,Development sample data,medium
+Avocado,pear,fruit,no,5,160,2,8.5,14.7,6.7,7,485,15,estimate,Development sample data,medium
+Orange,osan,fruit,no,14,47,0.9,11.8,0.1,2.4,0,181,43,estimate,Development sample data,medium
+Banana,ogede wewe,fruit,no,5,89,1.1,22.8,0.3,2.6,1,358,51,estimate,Development sample data,medium
+Pawpaw,papaya; ibepe,fruit,no,5,43,0.5,10.8,0.3,1.7,8,182,60,estimate,Development sample data,medium
+Watermelon,egusi baara,fruit,no,7,30,0.6,7.6,0.2,0.4,1,112,72,estimate,Development sample data,medium
+Palm oil,epo pupa; mmanu,oil,yes,365,884,0,0,100,0,0,,,estimate,Development sample data,medium
+Vegetable oil,groundnut oil; oil,oil,yes,365,884,0,0,100,0,0,,,estimate,Development sample data,medium
+Low-fat milk,milk,dairy,no,5,42,3.4,5,1,0,44,150,,estimate,Development sample data,medium
+Salt,iyo,seasoning,yes,3650,0,0,0,0,0,38758,,,estimate,Development sample data,high
+Seasoning cube,maggi; knorr; bouillon,seasoning,yes,365,250,10,30,10,0,22000,,,estimate,Development sample data,low
