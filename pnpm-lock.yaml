@@ -178,13 +178,23 @@ importers:
         version: 5.1.2(@types/node@26.6.10)(@vitest/coverage-v8@5.1.2)(vite@8.3.8(@types/node@26.6.10)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
   packages/planner:
+    dependencies:
+      '@dyjext/nutrition':
+        specifier: workspace:*
+        version: link:../nutrition
     devDependencies:
       '@dyjext/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: ^26.6.10
+        version: 26.6.10
       eslint:
         specifier: ^10.15.0
         version: 10.15.0(jiti@2.7.0)
+      fast-check:
+        specifier: ^4.11.0
+        version: 4.11.0
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
