@@ -1,8 +1,7 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { generateKeyEntry } from '@dyjext/db';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../app.factory.js';
-import { loadConfig } from '../config/config.js';
+import { createTestApp, type FakeAuthProvider, signIn } from '../testing/auth.js';
 import { nextWeek, type PlannerPreviewResponse } from './planning.service.js';
 
 describe('nextWeek', () => {
@@ -26,19 +25,20 @@ const hasServices = Boolean(process.env.DATABASE_URL && process.env.REDIS_URL);
 
 describe.skipIf(!hasServices)('planner preview', () => {
   let app: NestFastifyApplication;
+  let staff: Record<string, string>;
 
   beforeAll(async () => {
-    app = await createApp(loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'silent' }));
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    let auth: FakeAuthProvider;
+    ({ app, auth } = await createTestApp());
+    staff = signIn(auth, { staffRole: 'dietitian' }).headers;
   });
   afterAll(() => app.close());
 
   const preview = (body: object) =>
-    app.inject({ method: 'POST', url: '/v1/ops/planner/preview', payload: body });
+    app.inject({ method: 'POST', url: '/v1/ops/planner/preview', payload: body, headers: staff });
 
   it('lists the example profiles', async () => {
-    const res = await app.inject({ method: 'GET', url: '/v1/ops/planner/presets' });
+    const res = await app.inject({ method: 'GET', url: '/v1/ops/planner/presets', headers: staff });
     expect(res.json<{ id: string }[]>().map((p) => p.id)).toEqual([
       'diabetes_hypertension',
       'diabetes',
@@ -66,9 +66,9 @@ describe.skipIf(!hasServices)('planner preview', () => {
   });
 
   it('respects excluded ingredients', async () => {
-    const ingredients = (await app.inject({ method: 'GET', url: '/v1/ops/ingredients' })).json<
-      { id: string; name: string }[]
-    >();
+    const ingredients = (
+      await app.inject({ method: 'GET', url: '/v1/ops/ingredients', headers: staff })
+    ).json<{ id: string; name: string }[]>();
     const eggs = ingredients.find((i) => i.name === 'Eggs')!;
     const res = await preview({
       presetId: 'diabetes',
@@ -92,24 +92,25 @@ describe.skipIf(!hasServices)('planner preview', () => {
     expect((await preview({ presetId: 'keto' })).statusCode).toBe(400);
   });
 
-  it('is hidden in production', async () => {
-    const prod = await createApp(
-      loadConfig({
-        ...process.env,
-        NODE_ENV: 'production',
-        LOG_LEVEL: 'silent',
-        DATA_ENCRYPTION_KEYS: generateKeyEntry('test'),
-      }),
-    );
-    await prod.init();
-    await prod.getHttpAdapter().getInstance().ready();
+  it('does not exist in production, even for staff', async () => {
+    const { app: prod, auth } = await createTestApp({
+      env: { NODE_ENV: 'production', DATA_ENCRYPTION_KEYS: generateKeyEntry('test') },
+    });
     try {
-      const res = await prod.inject({
+      const anonymous = await prod.inject({
         method: 'POST',
         url: '/v1/ops/planner/preview',
         payload: { presetId: 'diabetes' },
       });
-      expect(res.statusCode).toBe(404);
+      expect(anonymous.statusCode).toBe(404);
+      const staffMember = signIn(auth, { staffRole: 'admin' });
+      const signedIn = await prod.inject({
+        method: 'POST',
+        url: '/v1/ops/planner/preview',
+        payload: { presetId: 'diabetes' },
+        headers: staffMember.headers,
+      });
+      expect(signedIn.statusCode).toBe(404);
     } finally {
       await prod.close();
     }

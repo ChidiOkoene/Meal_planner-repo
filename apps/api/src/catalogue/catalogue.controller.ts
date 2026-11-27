@@ -1,5 +1,6 @@
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { StaffOnly } from '../auth/decorators.js';
 import {
   type DishListQuery,
   dishListQuerySchema,
@@ -10,12 +11,10 @@ import { ApiZodQuery } from '../common/openapi.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { CatalogueService } from './catalogue.service.js';
 
-/**
- * Read-only catalogue endpoints for the staff console.
- * Not yet behind authentication: staff sign-in and role checks arrive in issue #8,
- * which must protect every /v1/ops route before anything is deployed publicly.
- */
+/** Read-only catalogue endpoints for the staff console. Any staff role. */
 @ApiTags('catalogue')
+@ApiBearerAuth()
+@StaffOnly()
 @Controller('ops')
 export class CatalogueController {
   constructor(@Inject(CatalogueService) private readonly catalogue: CatalogueService) {}

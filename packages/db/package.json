@@ -25,7 +25,8 @@
     "studio": "prisma studio",
     "clean": "rm -rf dist .turbo src/generated",
     "catalogue:import": "tsx scripts/import-catalogue.ts",
-    "keys:generate": "tsx scripts/generate-key.ts"
+    "keys:generate": "tsx scripts/generate-key.ts",
+    "staff:grant": "tsx scripts/grant-staff-role.ts"
   },
   "devDependencies": {
     "@dyjext/config": "workspace:*",

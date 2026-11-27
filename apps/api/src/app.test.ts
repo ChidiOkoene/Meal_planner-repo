@@ -3,11 +3,13 @@ import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from './app.factory.js';
+import { Public } from './auth/decorators.js';
 import { ZodValidationPipe } from './common/zod-validation.pipe.js';
 import { loadConfig } from './config/config.js';
 
 const echoSchema = z.object({ name: z.string().min(1), servings: z.number().int().positive() });
 
+@Public()
 @Controller('test-echo')
 class EchoController {
   @Post()
@@ -108,6 +110,12 @@ describe.skipIf(!hasServices)('API', () => {
       headers: { 'x-request-id': 'bad id with spaces' },
     });
     expect(generated.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('explains that sign-in is not configured instead of a generic error', async () => {
+    const res = await app.inject({ method: 'GET', url: '/v1/me' });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toMatchObject({ error: { message: 'Sign-in is not configured' } });
   });
 
   it('serves the OpenAPI document outside production', async () => {

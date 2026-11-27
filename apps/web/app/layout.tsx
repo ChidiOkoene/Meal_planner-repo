@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Providers } from '@/components/providers';
@@ -13,10 +14,12 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh font-sans">
-        <Providers>{children}</Providers>
-      </body>
-    </html>
+    <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
+      <html lang="en">
+        <body className="min-h-dvh font-sans">
+          <Providers>{children}</Providers>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

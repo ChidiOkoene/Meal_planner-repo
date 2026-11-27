@@ -1,8 +1,10 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { APP_CONFIG, type AppConfig } from '../config/config.js';
+import { Public } from '../auth/decorators.js';
 
 @ApiTags('meta')
+@Public()
 @Controller('meta')
 export class MetaController {
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}

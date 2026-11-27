@@ -5,6 +5,7 @@ import { type FastifyReply } from 'fastify';
 import { Redis } from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { REDIS } from '../redis/redis.module.js';
+import { Public } from '../auth/decorators.js';
 
 type CheckStatus = 'up' | 'down';
 
@@ -13,6 +14,7 @@ const CHECK_TIMEOUT_MS = 2000;
 /** Liveness and readiness probes for the hosting platform. Not versioned, not rate limited. */
 @ApiExcludeController()
 @SkipThrottle()
+@Public()
 @Controller()
 export class HealthController {
   constructor(

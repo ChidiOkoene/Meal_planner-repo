@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { StaffGate } from '@/components/ops/staff-gate';
 import { SiteHeader } from '@/components/site-header';
 
 export default function OpsLayout({ children }: { children: ReactNode }) {
@@ -9,9 +10,10 @@ export default function OpsLayout({ children }: { children: ReactNode }) {
         nav={[
           { href: '/ops', label: 'Home' },
           { href: '/ops/planner-preview', label: 'Planner preview' },
+          { href: '/ops/staff', label: 'Staff' },
         ]}
       />
-      {children}
+      <StaffGate>{children}</StaffGate>
     </>
   );
 }

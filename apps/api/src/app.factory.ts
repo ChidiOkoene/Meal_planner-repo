@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LOG_REDACT_PATHS } from '@dyjext/shared';
 import { type FastifyServerOptions, type RawRequestDefaultExpression } from 'fastify';
 import { AppModule } from './app.module.js';
+import { type AuthModuleOptions } from './auth/auth.module.js';
 import { PinoNestLogger } from './common/pino-nest-logger.js';
 import { type AppConfig } from './config/config.js';
 
@@ -17,7 +18,7 @@ const REQUEST_ID = /^[A-Za-z0-9._-]{1,128}$/;
  */
 export async function createApp(
   config: AppConfig,
-  options: { extraModules?: DynamicModule['imports'] } = {},
+  options: { extraModules?: DynamicModule['imports']; auth?: AuthModuleOptions } = {},
 ): Promise<NestFastifyApplication> {
   const logger: FastifyServerOptions['logger'] = {
     level: config.LOG_LEVEL,
@@ -39,7 +40,7 @@ export async function createApp(
   });
 
   const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule.register(config, options.extraModules),
+    AppModule.register(config, options.extraModules, options.auth),
     adapter,
     { bufferLogs: true },
   );

@@ -16,8 +16,7 @@ import {
   mealTypeSchema,
 } from '@dyjext/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../app.factory.js';
-import { loadConfig } from '../config/config.js';
+import { createTestApp, type FakeAuthProvider, signIn } from '../testing/auth.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CatalogueService } from './catalogue.service.js';
 
@@ -41,12 +40,13 @@ describe.skipIf(!hasServices)('catalogue', () => {
   let app: NestFastifyApplication;
   let catalogue: CatalogueService;
   let prisma: PrismaService;
+  let staff: Record<string, string>;
   const createdFamilies: string[] = [];
 
   beforeAll(async () => {
-    app = await createApp(loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'silent' }));
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    let auth: FakeAuthProvider;
+    ({ app, auth } = await createTestApp());
+    staff = signIn(auth, { staffRole: 'dietitian' }).headers;
     catalogue = app.get(CatalogueService);
     prisma = app.get(PrismaService);
   });
@@ -76,33 +76,53 @@ describe.skipIf(!hasServices)('catalogue', () => {
   }
 
   it('lists the latest version of every seeded dish', async () => {
-    const res = await app.inject({ method: 'GET', url: '/v1/ops/dishes' });
+    const res = await app.inject({ method: 'GET', url: '/v1/ops/dishes', headers: staff });
     expect(res.statusCode).toBe(200);
     expect(res.json<unknown[]>().length).toBeGreaterThanOrEqual(32);
   });
 
   it('filters by dish type and search text', async () => {
-    const swallows = await app.inject({ method: 'GET', url: '/v1/ops/dishes?dishType=swallow' });
+    const swallows = await app.inject({
+      method: 'GET',
+      url: '/v1/ops/dishes?dishType=swallow',
+      headers: staff,
+    });
     const names = swallows.json<{ name: string }[]>().map((d) => d.name);
     expect(names).toEqual(expect.arrayContaining(['Eba', 'Amala', 'Pounded yam']));
 
-    const search = await app.inject({ method: 'GET', url: '/v1/ops/dishes?q=egusi' });
+    const search = await app.inject({
+      method: 'GET',
+      url: '/v1/ops/dishes?q=egusi',
+      headers: staff,
+    });
     expect(search.json<{ name: string }[]>().map((d) => d.name)).toEqual(['Egusi soup']);
 
-    const alias = await app.inject({ method: 'GET', url: '/v1/ops/dishes?q=asaro' });
+    const alias = await app.inject({
+      method: 'GET',
+      url: '/v1/ops/dishes?q=asaro',
+      headers: staff,
+    });
     expect(alias.json<{ name: string }[]>().map((d) => d.name)).toEqual([
       'Yam porridge with greens',
     ]);
   });
 
   it('rejects invalid filters', async () => {
-    const res = await app.inject({ method: 'GET', url: '/v1/ops/dishes?dishType=pizza' });
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/ops/dishes?dishType=pizza',
+      headers: staff,
+    });
     expect(res.statusCode).toBe(400);
   });
 
   it('returns a dish with ingredients, nutrients, tags and recipes', async () => {
     const [jollof] = await catalogue.listDishes({ q: 'Jollof' });
-    const res = await app.inject({ method: 'GET', url: `/v1/ops/dishes/${jollof!.id}` });
+    const res = await app.inject({
+      method: 'GET',
+      url: `/v1/ops/dishes/${jollof!.id}`,
+      headers: staff,
+    });
     expect(res.statusCode).toBe(200);
     const dish = res.json<{
       ingredients: {
@@ -124,16 +144,25 @@ describe.skipIf(!hasServices)('catalogue', () => {
     const missing = await app.inject({
       method: 'GET',
       url: '/v1/ops/dishes/01900000-0000-7000-8000-000000000000',
+      headers: staff,
     });
     expect(missing.statusCode).toBe(404);
-    const malformed = await app.inject({ method: 'GET', url: '/v1/ops/dishes/not-a-uuid' });
+    const malformed = await app.inject({
+      method: 'GET',
+      url: '/v1/ops/dishes/not-a-uuid',
+      headers: staff,
+    });
     expect(malformed.statusCode).toBe(400);
   });
 
   it('lists ingredients with nutrients and local units', async () => {
-    const ingredients = await app.inject({ method: 'GET', url: '/v1/ops/ingredients' });
+    const ingredients = await app.inject({
+      method: 'GET',
+      url: '/v1/ops/ingredients',
+      headers: staff,
+    });
     expect(ingredients.json<unknown[]>().length).toBeGreaterThanOrEqual(46);
-    const units = await app.inject({ method: 'GET', url: '/v1/ops/units' });
+    const units = await app.inject({ method: 'GET', url: '/v1/ops/units', headers: staff });
     expect(units.json<{ name: string }[]>().map((u) => u.name)).toContain('derica');
   });
 

@@ -64,6 +64,10 @@ pnpm db:deploy
 pnpm db:seed
 ```
 
+## Sign-in
+
+Sign-in uses Clerk. Create a free development application, put its keys in `.env` (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`), and make yourself the first admin. The steps are in [`docs/authentication.md`](docs/authentication.md). The web app needs these keys to start; the API starts without them but refuses every signed-in request with "Sign-in is not configured".
+
 ## Try the planner preview
 
 With the steps above done, start the API and the web app together:
@@ -72,7 +76,7 @@ With the steps above done, start the API and the web app together:
 pnpm dev
 ```
 
-When both are up, open http://localhost:3000/ops/planner-preview. Pick an example parent, choose foods to avoid, and generate a week. The page uses sample dishes with estimated nutrients and illustrative limits; it is for development only and is hidden in production.
+When both are up, sign in as a staff member with 2-step verification on, then open http://localhost:3000/ops/planner-preview. Pick an example parent, choose foods to avoid, and generate a week. The page uses sample dishes with estimated nutrients and illustrative limits; it is for development only and is hidden in production.
 
 ## Common commands
 
