@@ -17,6 +17,7 @@ import { ApiZodBody } from '../common/openapi.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { APP_CONFIG, type AppConfig } from '../config/config.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { StaffTwoFactorService } from '../staff-two-factor/staff-two-factor.service.js';
 import { type AuthUser } from './auth-user.js';
 import { AUTH_PROVIDER, type AuthProviderGateway } from './clerk.gateway.js';
 import { CurrentUser, StaffOnly } from './decorators.js';
@@ -32,6 +33,7 @@ export class StaffController {
     @Inject(AUTH_PROVIDER) private readonly provider: AuthProviderGateway,
     @Inject(AuditService) private readonly audit: AuditService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(StaffTwoFactorService) private readonly staffTwoFactor: StaffTwoFactorService,
   ) {}
 
   /** Everyone with a current staff role. */
@@ -39,7 +41,10 @@ export class StaffController {
   async list() {
     const users = await this.prisma.user.findMany({
       where: { staffRoles: { some: { revokedAt: null } } },
-      include: { staffRoles: { where: { revokedAt: null }, orderBy: { grantedAt: 'asc' } } },
+      include: {
+        staffRoles: { where: { revokedAt: null }, orderBy: { grantedAt: 'asc' } },
+        staffTwoFactor: { select: { confirmedAt: true } },
+      },
       orderBy: { displayName: 'asc' },
     });
     return users.map((u) => ({
@@ -47,6 +52,7 @@ export class StaffController {
       email: u.email,
       displayName: u.displayName,
       twoFactorEnabled: u.twoFactorEnabled,
+      authenticatorApp: Boolean(u.staffTwoFactor?.confirmedAt),
       lastSignInAt: u.lastSignInAt,
       roles: u.staffRoles.map((r) => ({ role: r.role, grantedAt: r.grantedAt })),
     }));
@@ -104,6 +110,7 @@ export class StaffController {
     const sessionsEnded = role.user.authProviderId
       ? await this.provider.revokeAllSessions(role.user.authProviderId)
       : 0;
+    await this.staffTwoFactor.endSessions(params.userId);
     await this.audit.record({
       actorType: 'user',
       actorUserId: admin.id,

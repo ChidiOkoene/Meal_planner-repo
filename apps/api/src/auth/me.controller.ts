@@ -23,6 +23,12 @@ export class MeController {
       orderBy: { createdAt: 'asc' },
     });
     const isStaff = user.staffRoles.length > 0;
+    const authenticator = isStaff
+      ? await this.prisma.staffTwoFactor.findUnique({
+          where: { userId: user.id },
+          select: { confirmedAt: true },
+        })
+      : null;
     return {
       id: user.id,
       email: user.email,
@@ -31,6 +37,8 @@ export class MeController {
       staff: isStaff
         ? {
             twoFactorEnabled: user.twoFactorEnabled,
+            // Whether the built-in authenticator app is set up (the alternative to the provider's).
+            authenticatorApp: Boolean(authenticator?.confirmedAt),
             // False when 2-step is off, or this session didn't use it: staff routes refuse access.
             unlocked: user.staffSignInOk,
             // False only outside production when STAFF_REQUIRE_TWO_FACTOR=false; the web app warns.

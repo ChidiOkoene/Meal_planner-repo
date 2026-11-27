@@ -44,8 +44,8 @@ export const configSchema = z
     /** Web origins allowed to have issued a session token. Defaults to CORS_ORIGINS. */
     AUTH_AUTHORIZED_PARTIES: listOfOrigins,
     /**
-     * Require staff to use 2-step verification (default true). May be set to false only outside
-     * production, e.g. to test the staff console on an auth plan without 2-step.
+     * Require staff to use 2-step verification (default true): the built-in authenticator app or
+     * the auth provider's own. May be set to false only outside production, for quick testing.
      */
     STAFF_REQUIRE_TWO_FACTOR: z
       .enum(['true', 'false'])

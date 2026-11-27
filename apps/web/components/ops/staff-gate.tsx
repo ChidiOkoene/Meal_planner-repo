@@ -1,12 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { type Me, useApi } from '@/lib/api';
+import { StaffUnlock } from './staff-unlock';
 
 /**
- * Shows the staff console only to staff with 2-step verification on. The API enforces the same
+ * Shows the staff console only to staff who passed 2-step verification this sign-in. The API enforces the same
  * rules on every request; this just explains what's missing instead of showing errors.
  */
 export function StaffGate({ children }: { children: ReactNode }) {
@@ -31,16 +31,7 @@ export function StaffGate({ children }: { children: ReactNode }) {
     );
   }
   if (!me.data.staff.unlocked) {
-    return (
-      <Notice title="Turn on 2-step verification">
-        Staff can see health information, so the staff console needs 2-step verification with an
-        authenticator app.{' '}
-        <Link href="/account/security" className="font-semibold underline">
-          Set it up in your account
-        </Link>
-        , then sign out and sign in again using it.
-      </Notice>
-    );
+    return <StaffUnlock enrolled={me.data.staff.authenticatorApp} />;
   }
   return (
     <>

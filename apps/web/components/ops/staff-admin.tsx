@@ -9,6 +9,7 @@ interface StaffMember {
   email: string;
   displayName: string;
   twoFactorEnabled: boolean;
+  authenticatorApp: boolean;
   lastSignInAt: string | null;
   roles: { role: 'dietitian' | 'ops' | 'admin'; grantedAt: string }[];
 }
@@ -40,6 +41,11 @@ export function StaffAdmin() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['staff'] }),
   });
 
+  const resetTwoFactor = useMutation({
+    mutationFn: (userId: string) => api(`/v1/ops/staff/${userId}/two-factor`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['staff'] }),
+  });
+
   if (me.isPending) return null;
   if (!isAdmin) {
     return <p className="text-text-muted">Only admins can manage staff access.</p>;
@@ -60,8 +66,8 @@ export function StaffAdmin() {
           Invite a staff member
         </h2>
         <p className="mt-1 text-sm text-text-muted">
-          They get an email link to create an account. They must turn on 2-step verification before
-          they can use the staff console.
+          They get an email link to create an account. They set up an authenticator app the first
+          time they open the staff console.
         </p>
         <form onSubmit={submit} className="mt-4 flex flex-wrap items-end gap-3">
           <label className="flex min-w-56 flex-1 flex-col text-sm">
@@ -106,9 +112,9 @@ export function StaffAdmin() {
         <h2 id="staff-heading" className="font-semibold">
           Current staff
         </h2>
-        {remove.isError ? (
+        {remove.isError || resetTwoFactor.isError ? (
           <p role="alert" className="mt-2 text-sm text-bad">
-            {remove.error.message}
+            {(remove.error ?? resetTwoFactor.error)?.message}
           </p>
         ) : null}
         <ul className="mt-3 divide-y divide-border rounded-lg border border-border bg-surface">
@@ -121,9 +127,34 @@ export function StaffAdmin() {
                 <p className="font-medium">{person.displayName}</p>
                 <p className="text-text-muted">{person.email}</p>
               </div>
-              <span className={person.twoFactorEnabled ? 'text-ok' : 'text-warn'}>
-                {person.twoFactorEnabled ? '2-step on' : '2-step off'}
+              <span
+                className={
+                  person.authenticatorApp || person.twoFactorEnabled ? 'text-ok' : 'text-warn'
+                }
+              >
+                {person.authenticatorApp || person.twoFactorEnabled
+                  ? '2-step on'
+                  : '2-step not set up'}
               </span>
+              {person.authenticatorApp ? (
+                <button
+                  type="button"
+                  disabled={resetTwoFactor.isPending}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Reset 2-step verification for ${person.email}? Use this when they lose their phone. They set up a new authenticator app at their next visit.`,
+                      )
+                    ) {
+                      resetTwoFactor.mutate(person.id);
+                    }
+                  }}
+                  className="rounded-md border border-border px-2 py-1 hover:border-warn"
+                  aria-label={`Reset 2-step verification for ${person.email}`}
+                >
+                  Reset 2-step
+                </button>
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 {person.roles.map(({ role: r }) => (
                   <button
