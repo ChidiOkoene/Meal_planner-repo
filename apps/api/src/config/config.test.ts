@@ -62,6 +62,25 @@ describe('loadConfig', () => {
     });
   });
 
+  it('never allows staff 2-step to be switched off in production', () => {
+    expect(loadConfig(required).STAFF_REQUIRE_TWO_FACTOR).toBe(true);
+    expect(
+      loadConfig({ ...required, STAFF_REQUIRE_TWO_FACTOR: 'false' }).STAFF_REQUIRE_TWO_FACTOR,
+    ).toBe(false);
+    expect(() =>
+      loadConfig({
+        ...required,
+        NODE_ENV: 'production',
+        DATA_ENCRYPTION_KEYS: generateKeyEntry('k1'),
+        CLERK_SECRET_KEY: 'sk_live_example',
+        STAFF_REQUIRE_TWO_FACTOR: 'false',
+      }),
+    ).toThrow(/cannot be turned off in production/);
+    expect(() => loadConfig({ ...required, STAFF_REQUIRE_TWO_FACTOR: 'no' })).toThrow(
+      /STAFF_REQUIRE_TWO_FACTOR/,
+    );
+  });
+
   it('lists every problem in one error', () => {
     expect(() => loadConfig({ API_PORT: 'abc' })).toThrow(
       /DATABASE_URL[\s\S]*REDIS_URL|REDIS_URL[\s\S]*DATABASE_URL/,

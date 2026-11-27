@@ -53,6 +53,6 @@ export interface Me {
   email: string;
   displayName: string;
   staffRoles: ('dietitian' | 'ops' | 'admin')[];
-  staff: { twoFactorEnabled: boolean; unlocked: boolean } | null;
+  staff: { twoFactorEnabled: boolean; unlocked: boolean; twoFactorRequired: boolean } | null;
   households: { id: string; name: string; status: string; role: string }[];
 }

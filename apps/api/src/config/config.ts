@@ -43,6 +43,14 @@ export const configSchema = z
     CLERK_JWT_KEY: optional(z.string()).transform((v) => v?.replace(/\\n/g, '\n')),
     /** Web origins allowed to have issued a session token. Defaults to CORS_ORIGINS. */
     AUTH_AUTHORIZED_PARTIES: listOfOrigins,
+    /**
+     * Require staff to use 2-step verification (default true). May be set to false only outside
+     * production, e.g. to test the staff console on an auth plan without 2-step.
+     */
+    STAFF_REQUIRE_TWO_FACTOR: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
     /** Public URL of the web app, for links in emails (e.g. staff invitations). */
     WEB_URL: z.string().url().default('http://localhost:3000'),
   })
@@ -52,6 +60,13 @@ export const configSchema = z
       c.AUTH_AUTHORIZED_PARTIES.length > 0 ? c.AUTH_AUTHORIZED_PARTIES : c.CORS_ORIGINS,
   }))
   .superRefine((c, ctx) => {
+    if (c.NODE_ENV === 'production' && !c.STAFF_REQUIRE_TWO_FACTOR) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STAFF_REQUIRE_TWO_FACTOR'],
+        message: 'Staff 2-step verification cannot be turned off in production',
+      });
+    }
     if (c.NODE_ENV === 'production' && !c.CLERK_SECRET_KEY) {
       ctx.addIssue({
         code: 'custom',

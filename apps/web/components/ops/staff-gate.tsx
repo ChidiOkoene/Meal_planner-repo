@@ -42,7 +42,17 @@ export function StaffGate({ children }: { children: ReactNode }) {
       </Notice>
     );
   }
-  return <>{children}</>;
+  return (
+    <>
+      {me.data.staff.twoFactorRequired ? null : (
+        <div role="note" className="border-b border-bad bg-bad-bg px-4 py-2 text-center text-sm">
+          <strong>2-step verification is switched off for staff</strong>{' '}
+          (STAFF_REQUIRE_TWO_FACTOR=false). For testing only; production refuses to start like this.
+        </div>
+      )}
+      {children}
+    </>
+  );
 }
 
 function Notice({ title, children }: { title: string; children: ReactNode }) {
