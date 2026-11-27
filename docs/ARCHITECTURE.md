@@ -582,19 +582,19 @@ Vendors use the same channel: order summary template + a **signed one-time link*
 
 REST, JSON, versioned under `/v1`, OpenAPI generated from NestJS + zod, typed client generated for `apps/web`.
 
-| Area               | Endpoints (examples)                                                                                                                                        | Roles                      |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Me / households    | `GET /v1/me`, `POST /v1/households`, `POST /v1/households/:id/recipients`, `GET /v1/households/:id/timeline`                                                | payer                      |
-| Billing            | `POST /v1/billing/checkout-session`, `POST /v1/billing/portal-session`, `GET /v1/households/:id/wallet`                                                     | payer                      |
-| Plans (payer view) | `GET /v1/recipients/:id/plans?week=`, `GET /v1/recipients/:id/reports`                                                                                      | payer (own household only) |
-| Ops: health        | `PUT /v1/ops/recipients/:id/health-profile`, `PUT /v1/ops/recipients/:id/targets`                                                                           | dietitian                  |
-| Ops: plans         | `GET /v1/ops/plans?status=pending_approval`, `POST /v1/ops/plans/:id/approve`, `POST /v1/ops/plans/:id/regenerate`, `PATCH /v1/ops/plans/:id/slots/:slotId` | dietitian                  |
-| Ops: catalogue     | CRUD `/v1/ops/dishes`, `/v1/ops/ingredients`, `/v1/ops/units`, `POST /v1/ops/dishes/:id/verify`                                                             | dietitian, admin           |
-| Ops: orders        | `GET /v1/ops/orders`, `POST /v1/ops/orders/:id/reassign`, `POST /v1/ops/orders/:id/approve-overage`                                                         | ops                        |
-| Ops: escalations   | `GET /v1/ops/escalations`, `POST /v1/ops/escalations/:id/resolve`                                                                                           | dietitian, ops             |
-| Vendor link        | `GET /v1/vendor-orders/:token`, `POST /v1/vendor-orders/:token/confirm`, `POST /v1/vendor-orders/:token/delivery`                                           | token                      |
-| Webhooks           | `POST /webhooks/stripe`, `/webhooks/paystack`, `/webhooks/whatsapp`                                                                                         | signature                  |
-| Health             | `GET /healthz`, `GET /readyz`                                                                                                                               | public                     |
+| Area               | Endpoints (examples)                                                                                                                                                                             | Roles                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| Me / households    | `GET /v1/me`, `GET/POST /v1/households`, `GET /v1/households/:id`, `GET/POST /v1/households/:id/recipients`, `POST /v1/households/:id/recipients/:rid/status`, `GET /v1/households/:id/timeline` | payer                      |
+| Billing            | `POST /v1/billing/checkout-session`, `POST /v1/billing/portal-session`, `GET /v1/households/:id/wallet`                                                                                          | payer                      |
+| Plans (payer view) | `GET /v1/recipients/:id/plans?week=`, `GET /v1/recipients/:id/reports`                                                                                                                           | payer (own household only) |
+| Ops: health        | `PUT /v1/ops/recipients/:id/health-profile`, `PUT /v1/ops/recipients/:id/targets`                                                                                                                | dietitian                  |
+| Ops: plans         | `GET /v1/ops/plans?status=pending_approval`, `POST /v1/ops/plans/:id/approve`, `POST /v1/ops/plans/:id/regenerate`, `PATCH /v1/ops/plans/:id/slots/:slotId`                                      | dietitian                  |
+| Ops: catalogue     | CRUD `/v1/ops/dishes`, `/v1/ops/ingredients`, `/v1/ops/units`, `POST /v1/ops/dishes/:id/verify`                                                                                                  | dietitian, admin           |
+| Ops: orders        | `GET /v1/ops/orders`, `POST /v1/ops/orders/:id/reassign`, `POST /v1/ops/orders/:id/approve-overage`                                                                                              | ops                        |
+| Ops: escalations   | `GET /v1/ops/escalations`, `POST /v1/ops/escalations/:id/resolve`                                                                                                                                | dietitian, ops             |
+| Vendor link        | `GET /v1/vendor-orders/:token`, `POST /v1/vendor-orders/:token/confirm`, `POST /v1/vendor-orders/:token/delivery`                                                                                | token                      |
+| Webhooks           | `POST /webhooks/stripe`, `/webhooks/paystack`, `/webhooks/whatsapp`                                                                                                                              | signature                  |
+| Health             | `GET /healthz`, `GET /readyz`                                                                                                                                                                    | public                     |
 
 Authorisation is **resource-scoped**: a Payer can only access households they are a member of —
 enforced by a NestJS guard plus Postgres row-level security as defence in depth.

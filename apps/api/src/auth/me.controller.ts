@@ -1,9 +1,9 @@
-import { Controller, Get, Inject, Param } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { APP_CONFIG, type AppConfig } from '../config/config.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { type AuthUser } from './auth-user.js';
-import { CurrentUser, HouseholdAccess } from './decorators.js';
+import { CurrentUser } from './decorators.js';
 
 @ApiTags('me')
 @ApiBearerAuth()
@@ -46,16 +46,11 @@ export class MeController {
           }
         : null,
       households: memberships.map((m) => ({ ...m.household, role: m.role })),
+      // Set when this user subscribes for themself (ADR 010).
+      selfRecipient: await this.prisma.recipient.findUnique({
+        where: { userId: user.id },
+        select: { id: true, householdId: true, status: true, serviceTier: true },
+      }),
     };
-  }
-
-  /** A household the user belongs to (households API proper arrives in issue #17). */
-  @Get('households/:id')
-  @HouseholdAccess('id')
-  household(@Param('id') id: string) {
-    return this.prisma.household.findUniqueOrThrow({
-      where: { id },
-      select: { id: true, name: true, status: true, billingCurrency: true, createdAt: true },
-    });
   }
 }

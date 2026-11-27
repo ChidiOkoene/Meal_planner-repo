@@ -16,6 +16,7 @@
   "dependencies": {
     "@clerk/backend": "3.33.1",
     "@dyjext/db": "workspace:*",
+    "@dyjext/jobs": "workspace:*",
     "@dyjext/nutrition": "workspace:*",
     "@dyjext/planner": "workspace:*",
     "@dyjext/shared": "workspace:*",

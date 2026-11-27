@@ -48,6 +48,9 @@ async function main(): Promise<void> {
         recipients: {
           create: {
             displayName: 'Mama Test',
+            relationship: 'parent',
+            serviceTier: 'full_care',
+            countryCode: 'NG',
             phoneE164: recipientPhone,
             phoneVerifiedAt: new Date(),
             language: 'pcm',

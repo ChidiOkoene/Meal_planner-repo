@@ -62,4 +62,11 @@ export interface Me {
     twoFactorRequired: boolean;
   } | null;
   households: { id: string; name: string; status: string; role: string }[];
+  /** Set when this user subscribes for themself (ADR 010). */
+  selfRecipient: {
+    id: string;
+    householdId: string;
+    status: string;
+    serviceTier: 'full_care' | 'plan_only';
+  } | null;
 }

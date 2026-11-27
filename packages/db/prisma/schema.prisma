@@ -46,6 +46,8 @@ model User {
   staffTwoFactor         StaffTwoFactor?
   staffBackupCodes       StaffBackupCode[]
   staffTwoFactorSessions StaffTwoFactorSession[]
+  /// Set when this user subscribes for themself (ADR 010).
+  selfRecipient          Recipient?              @relation("RecipientSelf")
   grantedStaffRoles      StaffRole[]             @relation("StaffRoleGrantedBy")
   householdMemberships   HouseholdMember[]
   auditEntries           AuditLog[]
@@ -154,6 +156,7 @@ model Household {
 
   members    HouseholdMember[]
   recipients Recipient[]
+  timeline   HouseholdTimelineEntry[]
 
   @@map("households")
 }
@@ -191,29 +194,79 @@ enum HouseholdMemberRole {
   @@map("household_member_role")
 }
 
-/// The parent who receives meal plans and deliveries. Reached only through WhatsApp.
+/// The person who receives meal plans: a parent, another relative or friend, or the payer
+/// themself (ADR 010). Reached through WhatsApp; a self-subscriber also uses the web app.
 model Recipient {
-  id              String            @id @default(uuid(7)) @db.Uuid
-  householdId     String            @map("household_id") @db.Uuid
-  displayName     String            @map("display_name")
+  id              String                @id @default(uuid(7)) @db.Uuid
+  householdId     String                @map("household_id") @db.Uuid
+  displayName     String                @map("display_name")
+  /// Who they are to the payer.
+  relationship    RecipientRelationship @default(parent)
+  /// The payer's own account, when the payer is the recipient. At most one per user.
+  userId          String?               @unique @map("user_id") @db.Uuid
+  /// Full care (with vendor delivery) only in delivery areas; plan only anywhere supported.
+  serviceTier     ServiceTier           @map("service_tier")
+  /// ISO 3166-1 alpha-2 country the recipient lives in, e.g. "NG", "GB".
+  countryCode     String                @map("country_code") @db.Char(2)
   /// WhatsApp number in E.164 format, e.g. "+2348012345678".
-  phoneE164       String            @unique @map("phone_e164")
-  phoneVerifiedAt DateTime?         @map("phone_verified_at") @db.Timestamptz(6)
-  language        RecipientLanguage @default(en)
-  status          RecipientStatus   @default(invited)
+  phoneE164       String                @unique @map("phone_e164")
+  phoneVerifiedAt DateTime?             @map("phone_verified_at") @db.Timestamptz(6)
+  language        RecipientLanguage     @default(en)
+  status          RecipientStatus       @default(invited)
   /// IANA timezone used for the weekly schedule.
-  timezone        String            @default("Africa/Lagos")
-  addressId       String?           @unique @map("address_id") @db.Uuid
-  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  timezone        String                @default("Africa/Lagos")
+  addressId       String?               @unique @map("address_id") @db.Uuid
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User?     @relation("RecipientSelf", fields: [userId], references: [id], onDelete: SetNull)
   address   Address?  @relation(fields: [addressId], references: [id], onDelete: SetNull)
   consents  Consent[]
 
   @@index([householdId])
   @@index([status])
   @@map("recipients")
+}
+
+enum RecipientRelationship {
+  /// The payer subscribes for themself.
+  self
+  parent
+  /// Another relative.
+  relative
+  /// A friend or anyone else.
+  other
+
+  @@map("recipient_relationship")
+}
+
+enum ServiceTier {
+  /// Weekly plan plus ingredients bought and delivered by a local vendor.
+  full_care
+  /// Weekly plan and shopping list; the recipient buys their own food.
+  plan_only
+
+  @@map("service_tier")
+}
+
+/// What happened in a household, for the payer's dashboard. Never holds health details.
+model HouseholdTimelineEntry {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  householdId String   @map("household_id") @db.Uuid
+  /// e.g. "household.created", "recipient.invited", "recipient.paused".
+  kind        String
+  recipientId String?  @map("recipient_id") @db.Uuid
+  /// Who did it, when a person did (null for the system).
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  /// Display details only, e.g. { "displayName": "Mama" }.
+  data        Json     @default("{}") @db.JsonB
+  occurredAt  DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, occurredAt])
+  @@map("household_timeline")
 }
 
 enum RecipientLanguage {
