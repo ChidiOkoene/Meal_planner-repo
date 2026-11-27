@@ -26,6 +26,8 @@ Some recipients also live where we have no vendors: elsewhere in Nigeria, or abr
 6. **Prices are set per currency** in a price book, not converted from pounds. The naira price is set for local affordability.
 7. **No currency conversion when none is needed.** A naira payer with a Lagos recipient pays in naira, and the food is bought in naira: no FX rate, no FX margin.
 
+8. **Abroad, plans use what can be bought there.** For plan-only recipients outside Nigeria, the planner only uses ingredients sold in the recipient's country, whether in supermarkets, African or Caribbean shops, or online. When a Nigerian ingredient can't be found, it uses a dietitian-approved substitute (for example spinach for ugu, aubergine for garden egg) or drops the dish. Starting countries: the UK, the US, Canada and Ireland. Another country opens once its availability list exists. The starting list is in [`docs/diaspora-ingredients.md`](../diaspora-ingredients.md).
+
 ## Consequences
 
 - Data model: `recipients.relationship` (`self`, `parent`, `relative`, `other`), an optional `recipients.user_id` for self-subscribers, and a service tier per recipient (`full_care`, `plan_only`).
@@ -34,4 +36,6 @@ Some recipients also live where we have no vendors: elsewhere in Nigeria, or abr
 - Plan-only recipients skip orders, vendors and food charges. The planner still works from the Nigerian catalogue; for recipients abroad, the dietitian checks at intake that they can get the ingredients.
 - Payers in Nigeria are covered by Nigeria's NDPA as well as recipients; UK and EU GDPR apply to payers there.
 - The food-wallet question (ADR 008) also has to be checked against Central Bank of Nigeria rules for naira payers. Charging per order, without a stored balance, avoids the question in both places.
+- Catalogue: `ingredient_availability` (ingredient, country, where it's sold, form such as fresh, frozen or dried, confidence) and `ingredient_substitutes` (ingredient, substitute, countries, dietitian approval). Substitutes carry their own nutrients, so the validator checks the plan as actually eaten.
+- Recipients abroad say at intake whether they can reach an African or Caribbean shop; if not, shop-only ingredients count as unavailable. A "couldn't find this" reply on WhatsApp is recorded and lowers that ingredient's confidence for the country.
 - Not in scope yet: delivery outside Lagos, cuisines other than Nigerian, and payment providers beyond Paystack and Stripe.

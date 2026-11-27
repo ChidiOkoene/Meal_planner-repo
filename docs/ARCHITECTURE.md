@@ -423,13 +423,14 @@ generatePlan(input: PlannerInput, opts: { seed: string; engineVersion: string })
 - **Targets** (dietitian-signed): per-meal and per-day bands for kcal, carbs, protein, sodium, fibre, added sugar.
 - **Hard exclusions:** allergies, intolerances, religious rules, disliked dishes/ingredients, texture needs.
 - **Candidate dishes:** only `dietitian_verified` dishes, with nutrients per serving.
+- **Availability** (plan only, outside Nigeria): where each ingredient can be bought in the Recipient's country (`supermarket`, `african_shop`, `online`, `not_available`), and dietitian-approved substitutes. See ADR 010.
 - **Prices:** current price per ingredient per market + FX rate.
 - **Budget:** weekly food budget (Payer setting) in local currency.
 - **Context:** meal slots per day (e.g. breakfast, lunch, dinner, 1 snack), cooking ability, batch-cooking preference, household size eating the same food, last 4 weeks of plans (for variety), seasonal availability.
 
 ### 9.2 Algorithm
 
-1. **Filter** — drop any dish that violates a hard exclusion or whose _minimum_ portion already exceeds a per-meal limit.
+1. **Filter** — drop any dish that violates a hard exclusion or whose _minimum_ portion already exceeds a per-meal limit. Abroad, also drop any dish with a required ingredient the Recipient can't buy (directly or through an approved substitute); substitutes replace the original before nutrients are computed.
 2. **Portioning** — for each remaining (dish, slot) pair, compute the portion multiplier (within allowed bounds, e.g. 0.5×–1.5×, snapped to sensible local units) that best fits the slot's targets. Low-carb pairing logic: e.g. a soup is paired with a smaller swallow portion, or with a lower-GI swallow, to hit the carb band.
 3. **Construct** — greedy assignment of slots ordered by most-constrained first, honouring pairings (soup ↔ swallow) and batch-cook groups (one pot of soup covers 2–3 days).
 4. **Improve** — local search (swap / replace moves, simulated annealing, fixed iteration budget) maximising the score below while all hard constraints hold.
@@ -457,6 +458,7 @@ Score weights live in config (`planner_weights` table, versioned) so dietitians 
 2. Subtract pantry staples (oil, salt, seasoning cubes) — these go on a **monthly** list.
 3. Convert grams → **purchasable local units** (round up to nearest derica/mudu/bunch/piece), using the market's `local_units` table.
 4. Price with current price observations; produce `est_total` with a ±range from the unit and price variance.
+5. Abroad (plan only): use the substitute's name, group the list by where to buy (supermarket, African or Caribbean shop, online), and use metric or local retail units instead of market units; no prices.
 
 ### 9.5 Swaps
 
