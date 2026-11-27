@@ -1,15 +1,24 @@
 import { randomInt } from 'node:crypto';
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { normaliseMobileNumber } from '@dyjext/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { createTestApp, type FakeAuthProvider, signIn } from '../testing/auth.js';
 
 const hasServices = Boolean(process.env.DATABASE_URL && process.env.REDIS_URL);
 
-/** A fresh, valid Nigerian or UK mobile number, so tests never collide. */
-const digits = (n: number) => String(randomInt(10 ** (n - 1), 10 ** n));
-const ngMobile = () => `0803${digits(7)}`;
-const ukMobile = () => `07911${digits(6)}`;
+/**
+ * A fresh, valid Nigerian or UK mobile number, so tests never collide. Not every number in a
+ * range is allocated, so draw until the phone library accepts one.
+ */
+function mobile(prefix: string, length: number, country: 'NG' | 'GB'): string {
+  for (;;) {
+    const candidate = `${prefix}${String(randomInt(0, 10 ** length)).padStart(length, '0')}`;
+    if (normaliseMobileNumber(candidate, country)) return candidate;
+  }
+}
+const ngMobile = () => mobile('0803', 7, 'NG');
+const ukMobile = () => mobile('07911', 6, 'GB');
 
 const lagos = { line1: '12 Example Street', area: 'Surulere', city: 'Lagos' };
 
