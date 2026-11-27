@@ -61,8 +61,32 @@ describe.skipIf(!hasServices)('households and recipients', () => {
     expect(household.role).toBe('owner');
     const mine = await call('GET', '/households', payer.headers);
     expect(mine.json<{ id: string; billingCurrency: string }[]>()).toEqual([
-      expect.objectContaining({ id: household.id, billingCurrency: 'NGN' }),
+      expect.objectContaining({
+        id: household.id,
+        billingCurrency: 'NGN',
+        weeklyFoodBudgetNaira: null,
+      }),
     ]);
+    const withBudget = await call('POST', '/households', payer.headers, {
+      name: 'Mama’s care',
+      billingCurrency: 'GBP',
+      weeklyFoodBudgetNaira: 45_000,
+    });
+    expect(withBudget.json()).toMatchObject({ weeklyFoodBudgetNaira: 45_000 });
+    const stored = await prisma.household.findUniqueOrThrow({
+      where: { id: withBudget.json<{ id: string }>().id },
+    });
+    expect(stored).toMatchObject({
+      weeklyFoodBudgetMinor: 4_500_000n,
+      weeklyFoodBudgetCurrency: 'NGN',
+    });
+    const tooSmall = await call('POST', '/households', payer.headers, {
+      name: 'X',
+      billingCurrency: 'GBP',
+      weeklyFoodBudgetNaira: 500,
+    });
+    expect(tooSmall.statusCode).toBe(400);
+
     const bad = await call('POST', '/households', payer.headers, {
       name: 'X',
       billingCurrency: 'JPY',

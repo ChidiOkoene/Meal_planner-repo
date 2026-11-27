@@ -70,3 +70,24 @@ export interface Me {
     serviceTier: 'full_care' | 'plan_only';
   } | null;
 }
+
+/** A person a household pays for (GET /v1/households). */
+export interface RecipientSummary {
+  id: string;
+  displayName: string;
+  relationship: 'self' | 'parent' | 'relative' | 'other';
+  isYou: boolean;
+  countryCode: string;
+  serviceTier: 'full_care' | 'plan_only';
+  status: 'invited' | 'consented' | 'active' | 'paused' | 'closed';
+}
+
+export interface HouseholdSummary {
+  id: string;
+  name: string;
+  status: string;
+  billingCurrency: string;
+  weeklyFoodBudgetNaira: number | null;
+  role: 'owner' | 'member';
+  recipients: RecipientSummary[];
+}

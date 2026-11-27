@@ -10,7 +10,8 @@
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "clean": "rm -rf .next .turbo"
+    "clean": "rm -rf .next .turbo",
+    "test": "vitest run"
   },
   "dependencies": {
     "@clerk/nextjs": "7.10.10",
@@ -34,6 +35,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "^4.3.5",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.2"
   }
 }
