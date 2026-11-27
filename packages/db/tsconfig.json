@@ -1,8 +1,7 @@
 {
   "extends": "@dyjext/config/tsconfig/library.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
+    "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "prisma", "prisma.config.ts"]
 }

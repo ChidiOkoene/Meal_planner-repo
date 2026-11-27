@@ -1,3 +1,4 @@
-// Prisma schema, migrations, seed scripts and catalogue importers.
-// Implementation arrives in issue #4.
-export {};
+// Database access for every app and package. See docs/ARCHITECTURE.md §7.
+export { createPrismaClient, type CreatePrismaClientOptions } from './client.js';
+// Generated Prisma client: PrismaClient, Prisma namespace, enums and model types.
+export * from './generated/prisma/client.js';

@@ -54,16 +54,31 @@ Create your local environment file:
 cp .env.example .env
 ```
 
+Create the database tables and load test data:
+
+```bash
+pnpm db:deploy
+```
+
+```bash
+pnpm db:seed
+```
+
 ## Common commands
 
-| Command             | What it does                            |
-| ------------------- | --------------------------------------- |
-| `pnpm build`        | Build every package                     |
-| `pnpm lint`         | Lint every package                      |
-| `pnpm typecheck`    | Type-check every package                |
-| `pnpm test`         | Run tests                               |
-| `pnpm format`       | Format the repository with Prettier     |
-| `pnpm format:check` | Check formatting without changing files |
+| Command             | What it does                                                      |
+| ------------------- | ----------------------------------------------------------------- |
+| `pnpm build`        | Build every package                                               |
+| `pnpm lint`         | Lint every package                                                |
+| `pnpm typecheck`    | Type-check every package                                          |
+| `pnpm test`         | Run tests                                                         |
+| `pnpm format`       | Format the repository with Prettier                               |
+| `pnpm format:check` | Check formatting without changing files                           |
+| `pnpm db:migrate`   | Create a migration after changing the Prisma schema, and apply it |
+| `pnpm db:deploy`    | Apply existing migrations                                         |
+| `pnpm db:check`     | Fail if the schema and migrations are out of sync                 |
+| `pnpm db:seed`      | Load fictional test data (safe to re-run)                         |
+| `pnpm db:studio`    | Browse the database in Prisma Studio                              |
 
 ## Contributing
 

@@ -13,16 +13,31 @@
     }
   },
   "scripts": {
+    "generate": "prisma generate",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
-    "clean": "rm -rf dist .turbo"
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:check": "prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code",
+    "seed": "prisma db seed",
+    "studio": "prisma studio",
+    "clean": "rm -rf dist .turbo src/generated"
   },
   "devDependencies": {
     "@dyjext/config": "workspace:*",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^18.0.10",
     "eslint": "^10.15.0",
+    "prisma": "7.10.1",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vitest": "^5.1.2"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "pg": "^8.23.1"
   }
 }
