@@ -60,10 +60,27 @@ export function normaliseMobileNumber(input: string, countryCode?: string): stri
   return parsed.number;
 }
 
+/** Weekly food budget for full care, in whole naira: what a vendor may spend on groceries. */
+export const WEEKLY_FOOD_BUDGET_NAIRA = { min: 10_000, max: 500_000, suggested: 45_000 } as const;
+
+export const weeklyFoodBudgetNairaSchema = z
+  .number({ error: 'Enter an amount in naira' })
+  .int('Enter a whole number of naira')
+  .min(
+    WEEKLY_FOOD_BUDGET_NAIRA.min,
+    `At least ₦${WEEKLY_FOOD_BUDGET_NAIRA.min.toLocaleString('en-NG')}`,
+  )
+  .max(
+    WEEKLY_FOOD_BUDGET_NAIRA.max,
+    `At most ₦${WEEKLY_FOOD_BUDGET_NAIRA.max.toLocaleString('en-NG')}`,
+  );
+
 /** Body of `POST /v1/households`. The caller becomes the owner. */
 export const createHouseholdSchema = z.object({
   name: z.string().trim().min(1, 'Give the household a name').max(80),
   billingCurrency: billingCurrencySchema,
+  /** Full care only. Groceries are bought in naira, whatever currency the payer pays in. */
+  weeklyFoodBudgetNaira: weeklyFoodBudgetNairaSchema.optional(),
 });
 export type CreateHousehold = z.infer<typeof createHouseholdSchema>;
 

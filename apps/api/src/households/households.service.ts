@@ -38,6 +38,10 @@ function recipientView(r: Recipient & { address?: { city: string; area: string |
   };
 }
 
+/** Weekly food budget in whole naira (stored in kobo), or null when not set. */
+const budgetNaira = (h: { weeklyFoodBudgetMinor: bigint | null }) =>
+  h.weeklyFoodBudgetMinor === null ? null : Number(h.weeklyFoodBudgetMinor / 100n);
+
 /** Households and the people they pay for (ADR 010). */
 @Injectable()
 export class HouseholdsService {
@@ -50,6 +54,12 @@ export class HouseholdsService {
         data: {
           name: input.name,
           billingCurrency: input.billingCurrency,
+          ...(input.weeklyFoodBudgetNaira
+            ? {
+                weeklyFoodBudgetMinor: BigInt(input.weeklyFoodBudgetNaira) * 100n, // kobo
+                weeklyFoodBudgetCurrency: 'NGN',
+              }
+            : {}),
           members: { create: { userId: user.id, role: 'owner' } },
         },
       });
@@ -61,6 +71,7 @@ export class HouseholdsService {
         name: household.name,
         status: household.status,
         billingCurrency: household.billingCurrency,
+        weeklyFoodBudgetNaira: budgetNaira(household),
         role: 'owner' as const,
         createdAt: household.createdAt,
       };
@@ -79,6 +90,7 @@ export class HouseholdsService {
       name: h.name,
       status: h.status,
       billingCurrency: h.billingCurrency,
+      weeklyFoodBudgetNaira: budgetNaira(h),
       role,
       recipients: h.recipients.map(recipientView),
     }));
@@ -94,6 +106,7 @@ export class HouseholdsService {
       name: h.name,
       status: h.status,
       billingCurrency: h.billingCurrency,
+      weeklyFoodBudgetNaira: budgetNaira(h),
       createdAt: h.createdAt,
       recipients: h.recipients.map(recipientView),
     };

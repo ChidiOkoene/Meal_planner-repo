@@ -88,7 +88,8 @@ export async function createTestApp(
   const config = loadConfig({
     ...process.env,
     NODE_ENV: 'test',
-    LOG_LEVEL: 'silent',
+    // Set TEST_LOG_LEVEL=error to see server errors behind a failing test.
+    LOG_LEVEL: process.env.TEST_LOG_LEVEL ?? 'silent',
     RATE_LIMIT_PER_MINUTE: '10000',
     CLERK_SECRET_KEY: 'sk_test_fake',
     CLERK_JWT_KEY: TEST_JWT_PUBLIC_KEY,
