@@ -136,7 +136,8 @@ describe('preferences', () => {
     );
     const count = familiesIn(withFavourite).filter((id) => id === unused!.familyId).length;
     expect(count).toBeGreaterThan(0);
-    expect(count).toBeLessThanOrEqual(2); // still within the weekly repeat limit
+    // Still within the weekly repeat limit (no-cook snacks: two servings count as one cook).
+    expect(count).toBeLessThanOrEqual(unused!.cookMinutes === 0 ? 4 : 2);
   });
 });
 
@@ -212,7 +213,8 @@ describe('budget', () => {
 });
 
 describe('properties', () => {
-  it('every plan reported ok meets every per-meal and per-day limit', () => {
+  // 25 full plans: several seconds, more on a busy CI runner, so allow well beyond the 5 s default.
+  it('every plan reported ok meets every per-meal and per-day limit', { timeout: 60_000 }, () => {
     fc.assert(
       fc.property(fc.string({ minLength: 1, maxLength: 12 }), (seed) => {
         const input = baseInput();

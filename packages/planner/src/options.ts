@@ -40,8 +40,10 @@ export function allowedDishes(
 }
 
 /**
- * Every meal option for a meal type that meets its per-meal limits, with the portion that
- * best fits. Options are sorted by key, so the result is deterministic.
+ * Every meal option for a meal type that meets its per-meal limits: each dish (or soup +
+ * swallow pair) at every portion that fits. The scorer prefers standard portions, but larger
+ * or smaller ones stay available to meet daily minimums and maximums.
+ * Options are sorted by key, so the result is deterministic.
  */
 export function buildMealOptions(
   mealType: MealType,
@@ -53,8 +55,9 @@ export function buildMealOptions(
 
   // Dishes eaten on their own.
   for (const dish of forMeal.filter((d) => d.dishType !== 'soup' && d.dishType !== 'swallow')) {
-    const best = bestPortions([dish], bands);
-    if (best) options.push(makeOption(mealType, [{ dish, portion: best[0]! }]));
+    for (const [portion] of fittingPortions([dish], bands)) {
+      options.push(makeOption(mealType, [{ dish, portion: portion! }]));
+    }
   }
 
   // A soup with a swallow: portions chosen together, which is how carbs are controlled.
@@ -62,12 +65,11 @@ export function buildMealOptions(
   const swallows = forMeal.filter((d) => d.dishType === 'swallow');
   for (const soup of soups) {
     for (const swallow of swallows) {
-      const best = bestPortions([soup, swallow], bands);
-      if (best) {
+      for (const [soupPortion, swallowPortion] of fittingPortions([soup, swallow], bands)) {
         options.push(
           makeOption(mealType, [
-            { dish: soup, portion: best[0]! },
-            { dish: swallow, portion: best[1]! },
+            { dish: soup, portion: soupPortion! },
+            { dish: swallow, portion: swallowPortion! },
           ]),
         );
       }
@@ -77,27 +79,16 @@ export function buildMealOptions(
   return options.sort((a, b) => a.key.localeCompare(b.key));
 }
 
-/**
- * The portions (one per dish) that meet the bands, closest to standard servings.
- * Ties prefer a larger first item (more soup, less swallow). Null if no combination fits.
- */
-function bestPortions(dishes: PlannerDish[], bands: NutrientBands | undefined): number[] | null {
-  let best: { portions: number[]; deviation: number } | null = null;
+/** Every combination of portions (one per dish) that keeps the meal within its bands. */
+function fittingPortions(dishes: PlannerDish[], bands: NutrientBands | undefined): number[][] {
+  const fitting: number[][] = [];
   for (const portions of combinations(dishes.length)) {
     const nutrients = sumNutrients(
       dishes.map((d, i) => scaleNutrients(d.perServing, portions[i]!)),
     );
-    if (bandViolation(nutrients, bands) > 0) continue;
-    const deviation = portions.reduce((sum, p) => sum + Math.abs(p - 1), 0);
-    if (
-      !best ||
-      deviation < best.deviation - 1e-9 ||
-      (Math.abs(deviation - best.deviation) < 1e-9 && portions[0]! > best.portions[0]!)
-    ) {
-      best = { portions, deviation };
-    }
+    if (bandViolation(nutrients, bands) === 0) fitting.push(portions);
   }
-  return best?.portions ?? null;
+  return fitting;
 }
 
 function* combinations(length: number): Generator<number[]> {

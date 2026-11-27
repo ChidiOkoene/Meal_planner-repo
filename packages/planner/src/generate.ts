@@ -12,7 +12,7 @@ import {
   type UnmetRule,
 } from './types.js';
 
-export const ENGINE_VERSION = 'planner-1.0.0';
+export const ENGINE_VERSION = 'planner-1.1.0';
 
 export const DEFAULT_WEIGHTS: ScoreWeights = {
   favourite: 3,
