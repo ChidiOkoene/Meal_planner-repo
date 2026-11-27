@@ -77,3 +77,24 @@ export const dishChangesSchema = z
   .partial()
   .refine((changes) => Object.keys(changes).length > 0, 'At least one change is required');
 export type DishChanges = z.infer<typeof dishChangesSchema>;
+
+/** Example recipient profiles for the development planner preview. */
+export const plannerPresetIdSchema = z.enum([
+  'diabetes_hypertension',
+  'diabetes',
+  'hypertension',
+  'chewing_difficulty',
+]);
+export type PlannerPresetId = z.infer<typeof plannerPresetIdSchema>;
+
+/** Body of `POST /v1/ops/planner/preview` (development only). */
+export const plannerPreviewRequestSchema = z.object({
+  presetId: plannerPresetIdSchema,
+  softTextureOnly: z.boolean().default(false),
+  excludedIngredientIds: z.array(idSchema).max(50).default([]),
+  favouriteFamilyIds: z.array(idSchema).max(20).default([]),
+  cooking: z.enum(['self', 'helper']).default('helper'),
+  /** Same seed and settings give the same plan; change it for a different week. */
+  seed: z.string().trim().min(1).max(40).default('preview'),
+});
+export type PlannerPreviewRequest = z.input<typeof plannerPreviewRequestSchema>;

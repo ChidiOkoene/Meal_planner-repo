@@ -64,6 +64,16 @@ pnpm db:deploy
 pnpm db:seed
 ```
 
+## Try the planner preview
+
+With the steps above done, start the API and the web app together:
+
+```bash
+pnpm dev
+```
+
+When both are up, open http://localhost:3000/ops/planner-preview. Pick an example parent, choose foods to avoid, and generate a week. The page uses sample dishes with estimated nutrients and illustrative limits; it is for development only and is hidden in production.
+
 ## Common commands
 
 | Command             | What it does                                                      |
