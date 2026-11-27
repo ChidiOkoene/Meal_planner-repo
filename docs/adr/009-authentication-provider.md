@@ -19,5 +19,6 @@ Families abroad, dietitians and operations staff sign in to the web app. Parents
 
 - Swapping the provider later touches only `AuthProviderGateway` and the token verifier in `apps/api/src/auth`, plus the web app's Clerk components.
 - Clerk's backend SDK does not say whether a user has a passkey, so staff are required to have **2-step verification** (authenticator app). Passkeys remain available as a convenient first sign-in step.
+- Clerk's 2-step verification is a paid feature, so staff 2-step is built into our API instead (an authenticator app, RFC 6238, with backup codes; see [authentication.md](../authentication.md#staff-2-step-verification)). Clerk's own 2-step is still accepted if the plan is upgraded. This is the one piece of authentication we run ourselves; it is small, and well-specified.
 - Enterprise SSO (SAML) for partner organisations is possible later; it is not needed now.
 - Alternatives considered: Auth0 (more configuration, smaller free tier) and running our own auth (more risk, no benefit at this stage).

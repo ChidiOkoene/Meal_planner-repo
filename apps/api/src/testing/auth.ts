@@ -4,6 +4,7 @@
 import { createSign, generateKeyPairSync, randomUUID } from 'node:crypto';
 import { type DynamicModule } from '@nestjs/common';
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { generateKeyEntry } from '@dyjext/db';
 import { createApp } from '../app.factory.js';
 import { type AuthProviderGateway, type IdentityInfo } from '../auth/clerk.gateway.js';
 import { loadConfig } from '../config/config.js';
@@ -92,6 +93,9 @@ export async function createTestApp(
     CLERK_SECRET_KEY: 'sk_test_fake',
     CLERK_JWT_KEY: TEST_JWT_PUBLIC_KEY,
     AUTH_AUTHORIZED_PARTIES: WEB_ORIGIN,
+    DATA_ENCRYPTION_KEYS: generateKeyEntry('test'),
+    // Tests choose this explicitly, whatever the developer's .env says.
+    STAFF_REQUIRE_TWO_FACTOR: 'true',
     ...options.env,
   });
   const app = await createApp(config, {
@@ -122,15 +126,19 @@ export function signIn(
     invitedStaffRole: options.staffRole ?? null,
     twoFactorEnabled: twoFactor,
   });
-  const token = signToken({
-    sub: providerUserId,
-    sid: `sess_${providerUserId}`,
-    fva: [0, options.secondFactorAge ?? (twoFactor ? 0 : -1)],
-  });
+  const tokenFor = (sessionId: string) =>
+    signToken({
+      sub: providerUserId,
+      sid: sessionId,
+      fva: [0, options.secondFactorAge ?? (twoFactor ? 0 : -1)],
+    });
+  const token = tokenFor(`sess_${providerUserId}`);
   return {
     providerUserId,
     email: identity.email,
     token,
     headers: { authorization: `Bearer ${token}` },
+    /** Headers for a separate sign-in of the same person (a new session id). */
+    newSession: () => ({ authorization: `Bearer ${tokenFor(`sess_${randomUUID()}`)}` }),
   };
 }

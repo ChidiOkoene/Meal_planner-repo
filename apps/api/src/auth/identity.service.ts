@@ -1,7 +1,9 @@
 import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { StaffRoleType } from '@dyjext/db';
 import { AuditService } from '../audit/audit.service.js';
+import { APP_CONFIG, type AppConfig } from '../config/config.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { StaffTwoFactorService } from '../staff-two-factor/staff-two-factor.service.js';
 import { AUTH_PROVIDER, type AuthProviderGateway } from './clerk.gateway.js';
 import { type AuthUser } from './auth-user.js';
 import { type SessionClaims } from './token-verifier.js';
@@ -22,6 +24,8 @@ export class IdentityService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(AUTH_PROVIDER) private readonly provider: AuthProviderGateway,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(StaffTwoFactorService) private readonly staffTwoFactor: StaffTwoFactorService,
   ) {}
 
   async resolve(claims: SessionClaims): Promise<AuthUser> {
@@ -33,16 +37,26 @@ export class IdentityService {
     const roles = await this.prisma.staffRole.findMany({
       where: { userId: user.id, revokedAt: null },
     });
+    const staffRoles = roles.map((r) => r.role);
     const secondFactorAge = claims.fva?.[1];
+    // Either the auth provider's own 2-step (on paid plans), or our built-in authenticator app.
+    const providerTwoFactorOk =
+      user.twoFactorEnabled && (secondFactorAge === undefined || secondFactorAge >= 0);
+    const staffSignInOk =
+      !this.config.STAFF_REQUIRE_TWO_FACTOR ||
+      providerTwoFactorOk ||
+      (staffRoles.length > 0 &&
+        (await this.staffTwoFactor.isSessionUnlocked(user.id, claims.sid ?? null)));
     return {
       id: user.id,
       providerUserId: claims.sub,
       email: user.email,
       displayName: user.displayName,
-      staffRoles: roles.map((r) => r.role),
+      staffRoles,
       twoFactorEnabled: user.twoFactorEnabled,
       sessionId: claims.sid ?? null,
       secondFactorVerified: secondFactorAge === undefined ? null : secondFactorAge >= 0,
+      staffSignInOk,
     };
   }
 

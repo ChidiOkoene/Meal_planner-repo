@@ -67,8 +67,8 @@ export class StaffGuard implements CanActivate {
         : required.some((r) => user.staffRoles.includes(r)));
     if (!allowed) throw new ForbiddenException('You do not have access to this');
 
-    // Must have 2-step verification set up, and (when the token says) used it this session.
-    if (!user.twoFactorEnabled || user.secondFactorVerified === false) {
+    // 2-step verification set up and used this session (see AuthUser.staffSignInOk).
+    if (!user.staffSignInOk) {
       throw new ForbiddenException({
         code: 'two_factor_required',
         message: 'Staff must turn on 2-step verification and use it to sign in',
@@ -95,9 +95,7 @@ export class HouseholdAccessGuard implements CanActivate {
     if (!householdId) throw new NotFoundException();
 
     const isSupportStaff =
-      (user.staffRoles.includes('ops') || user.staffRoles.includes('admin')) &&
-      user.twoFactorEnabled &&
-      user.secondFactorVerified !== false;
+      (user.staffRoles.includes('ops') || user.staffRoles.includes('admin')) && user.staffSignInOk;
     if (isSupportStaff) return true;
 
     const member = await this.prisma.householdMember.findUnique({
